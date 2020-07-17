@@ -28,6 +28,7 @@ class FileBrowser(QObject):
             self.file_tree.setRootIndex(index)
         self.file_tree.setExpanded(index, True)
         self.file_tree.setCurrentIndex(index)
+        self.file_tree.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
         self.model.directoryLoaded.connect(self.directory_loaded)
         self.model.dataChanged.connect(self.data_changed)
         selection_model = self.file_tree.selectionModel()
