@@ -20,44 +20,97 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout">
-    <property name="sizeConstraint">
-     <enum>QLayout::SetDefaultConstraint</enum>
-    </property>
-    <item row="7" column="1">
-     <widget class="QLabel" name="lib_label">
-      <property name="text">
-       <string>Library</string>
-      </property>
-     </widget>
-    </item>
-    <item row="8" column="1">
-     <widget class="QTreeView" name="lib_tree"/>
-    </item>
-    <item row="8" column="0">
-     <widget class="QTreeView" name="file_tree"/>
-    </item>
-    <item row="7" column="0">
-     <widget class="QLabel" name="files_label">
-      <property name="text">
-       <string>Files</string>
-      </property>
-     </widget>
-    </item>
-    <item row="6" column="0">
-     <layout class="QGridLayout" name="media_controls">
-      <item row="0" column="0">
-       <widget class="QPushButton" name="play_btn">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>Play</string>
-        </property>
-        <property name="icon">
-         <iconset theme="media-playback-start"/>
+   <layout class="QVBoxLayout" name="verticalLayout_5">
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <layout class="QGridLayout" name="media_controls">
+        <item row="0" column="0">
+         <widget class="QPushButton" name="play_btn">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Play</string>
+          </property>
+          <property name="icon">
+           <iconset theme="media-playback-start">
+            <normaloff>.</normaloff>.</iconset>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QSlider" name="horizontalSlider">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
        </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QLabel" name="files_label">
+          <property name="text">
+           <string>Files</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTreeView" name="file_tree"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QLabel" name="lib_label">
+          <property name="text">
+           <string>Library</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTreeView" name="lib_tree"/>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Scratch Pad</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QListView" name="listView"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Metadata</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTreeView" name="metadata_view"/>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
@@ -85,6 +138,7 @@
     <addaction name="actionFile_Tree"/>
     <addaction name="actionFile_List"/>
     <addaction name="actionLibrary"/>
+    <addaction name="actionMetadata"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
@@ -106,7 +160,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>File Tree</string>
+    <string>Files</string>
    </property>
    <property name="shortcut">
     <string>F1</string>
@@ -120,7 +174,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>File List</string>
+    <string>Library</string>
    </property>
    <property name="shortcut">
     <string>F2</string>
@@ -134,10 +188,24 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Library</string>
+    <string>Scratchpad</string>
    </property>
    <property name="shortcut">
     <string>F3</string>
+   </property>
+  </action>
+  <action name="actionMetadata">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Metadata</string>
+   </property>
+   <property name="shortcut">
+    <string>F4</string>
    </property>
   </action>
  </widget>
