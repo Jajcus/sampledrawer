@@ -22,7 +22,7 @@ class MainWindow:
         ui_file.open(QFile.ReadOnly)
         loader = QUiLoader()
         self.window = loader.load(ui_file)
-        self.file_browser = FileBrowser(self.window.file_tree, program_args)
+        self.file_browser = FileBrowser(self.window, program_args)
         self.sample_player = SamplePlayer(self.window)
         self.sample_analyzer = SampleAnalyzer()
         self.metadata_browser = MetadataBrowser(self.window.metadata_view)
