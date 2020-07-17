@@ -6,6 +6,7 @@ from PySide2.QtCore import QFile
 
 from .filebrowser import FileBrowser
 from .sampleplayer import SamplePlayer
+from .sampleanalyzer import SampleAnalyzer
 
 from . import __path__ as PKG_PATH
 
@@ -19,6 +20,8 @@ class MainWindow:
         self.window = loader.load(ui_file)
         self.file_browser = FileBrowser(self.window.file_tree)
         self.sample_player = SamplePlayer(self.window)
+        self.sample_analyzer = SampleAnalyzer()
         self.file_browser.file_selected.connect(self.sample_player.file_selected)
+        self.file_browser.file_selected.connect(self.sample_analyzer.request_file_metadata)
     def show(self):
         self.window.show()

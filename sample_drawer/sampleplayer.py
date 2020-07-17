@@ -31,6 +31,7 @@ class SamplePlayer:
         self.decoder.bufferReady.connect(self.buffer_ready)
         self.decoder.durationChanged.connect(self.duration_changed)
         self.decoder.formatChanged.connect(self.format_changed)
+        self.decoder.metaDataChanged.connect(self.metadata_changed)
 
     @Slot(QAudioDecoder.Error)
     def decoder_error(self, err):
@@ -103,6 +104,10 @@ class SamplePlayer:
     @Slot(QAudioFormat)
     def format_changed(self, fmt):
         logger.info("Format: %i", fmt)
+
+    @Slot(str,  object)
+    def metadata_changed(self, key, value):
+        logger.info("metadata: %s: %r", key, value)
 
     @Slot(str)
     def file_selected(self, path):
