@@ -17,12 +17,12 @@ logger = logging.getLogger("mainwindow")
 UI_FILENAME = os.path.join(PKG_PATH[0], "mainwindow.ui")
 
 class MainWindow:
-    def __init__(self):
+    def __init__(self, program_args):
         ui_file = QFile(UI_FILENAME)
         ui_file.open(QFile.ReadOnly)
         loader = QUiLoader()
         self.window = loader.load(ui_file)
-        self.file_browser = FileBrowser(self.window.file_tree)
+        self.file_browser = FileBrowser(self.window.file_tree, program_args)
         self.sample_player = SamplePlayer(self.window)
         self.sample_analyzer = SampleAnalyzer()
         self.metadata_browser = MetadataBrowser(self.window.metadata_view)

@@ -10,16 +10,22 @@ logger = logging.getLogger("filebrowser")
 
 class FileBrowser(QObject):
     file_selected = Signal(str)
-    def __init__(self, file_tree):
+    def __init__(self, file_tree, program_args):
         QObject.__init__(self)
         self.file_tree = file_tree
-        self.current_path = os.path.realpath(os.curdir)
         self.model = QFileSystemModel(file_tree)
-        self.model.setRootPath("")
+        if program_args.root:
+            self.model.setRootPath(program_args.root)
+            self.current_path = program_args.root
+        else:
+            self.model.setRootPath("")
+            self.current_path = os.path.realpath(os.curdir)
         self.file_tree.setModel(self.model)
         self.file_tree.sortByColumn(0, Qt.AscendingOrder)
         self.file_tree.setSortingEnabled(True)
         index = self.model.index(self.current_path)
+        if program_args.root:
+            self.file_tree.setRootIndex(index)
         self.file_tree.setExpanded(index, True)
         self.file_tree.setCurrentIndex(index)
         self.model.directoryLoaded.connect(self.directory_loaded)

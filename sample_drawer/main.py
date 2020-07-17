@@ -11,6 +11,8 @@ from .signalhandler import SignalHandler
 def main():
     parser = argparse.ArgumentParser(description='Sample Drawer – audio sample browser and organizer.')
     parser.set_defaults(debug_level=logging.INFO)
+    parser.add_argument('--root', action='store', dest='root',
+                        help='Display only this directory in filesystem browser')
     parser.add_argument('--debug', action='store_const',
                         dest='debug_level', const=logging.DEBUG,
                         help='Enable debug output')
@@ -21,7 +23,7 @@ def main():
 
     logging.basicConfig(level=args.debug_level)
     app = QApplication([])
-    win = MainWindow()
+    win = MainWindow(args)
     win.show()
     signal_handler = SignalHandler()
     signal_handler.activate()
