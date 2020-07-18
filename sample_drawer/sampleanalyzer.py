@@ -14,7 +14,6 @@ from .lrucache import LRUCache
 from .samplemetadata import SampleMetadata
 
 WAVEFORM_RESOLUTION = 200 # samples per second
-MAX_ANALYZE_LENGTH = 100 # seconds
 
 logger = logging.getLogger("sampleanalyzer")
 
@@ -93,7 +92,7 @@ class SampleAnalyzerWorker(QRunnable):
             logger.debug("sections: %r", snd_file.sections)
             logger.debug("closed: %r", snd_file.closed)
             logger.debug("extra_info: %r", snd_file.extra_info)
-            frames = snd_file.read(MAX_ANALYZE_LENGTH * snd_file.samplerate)
+            frames = snd_file.read()
             peek_level = max(numpy.amax(frames), -numpy.amin(frames))
             if not peek_level:
                 peek_level_db = -math.inf
