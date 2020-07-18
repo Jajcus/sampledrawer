@@ -95,8 +95,15 @@ class SampleAnalyzerWorker(QRunnable):
             logger.debug("extra_info: %r", snd_file.extra_info)
             frames = snd_file.read(MAX_ANALYZE_LENGTH * snd_file.samplerate)
             peek_level = max(numpy.amax(frames), -numpy.amin(frames))
-            peek_level_db = 20*math.log10(peek_level)
-            file_info["peek_level"] = peek_level_db
+            if not peek_level:
+                peek_level_db = -math.inf
+                file_info["peek_level"] = peek_level_db
+            else:
+                try:
+                    peek_level_db = 20*math.log10(peek_level)
+                    file_info["peek_level"] = peek_level_db
+                except ValueError:
+                    logger.error("Cannot convert %r to dBFS", peek_level)
             logger.debug("%r frames read", len(frames))
         return file_info
     class Signals(QObject):
