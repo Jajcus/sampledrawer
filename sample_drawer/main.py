@@ -10,6 +10,7 @@ from PySide2.QtWidgets import QApplication
 
 from .mainwindow import MainWindow
 from .signalhandler import SignalHandler
+from .library import Library
 
 APP_NAME = "sampledrawer"
 APP_AUTHOR = "Jajcus"
@@ -22,6 +23,7 @@ class Application:
     def __init__(self):
         self.args = None
         self.main_window = None
+        self.library = None
         self.qapp = None
         self.started = False
         self.appdirs = appdirs.AppDirs(APP_NAME, APP_AUTHOR)
@@ -31,6 +33,8 @@ class Application:
 
         logging.debug("qt_argv: %r", self.args.qt_argv)
         self.qapp = QApplication(self.args.qt_argv)
+
+        self.library = Library(self)
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Sample Drawer – audio sample browser and organizer.')
