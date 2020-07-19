@@ -8,8 +8,8 @@ import appdirs
 
 from PySide2.QtWidgets import QApplication
 
-from .mainwindow import MainWindow
-from .signalhandler import SignalHandler
+from .gui.mainwindow import MainWindow
+from .gui.signalhandler import SignalHandler
 from .library import Library
 from .sampleanalyzer import SampleAnalyzer
 

@@ -6,8 +6,6 @@ import signal
 from PySide2.QtCore import QObject, QTimer, Slot, QSocketNotifier
 from PySide2.QtWidgets import QApplication
 
-from .mainwindow import MainWindow
-
 # Hack from: https://stackoverflow.com/questions/35305920/pyqt-core-application-doesnt-return-to-caller-on-quit
 # should really be properly implemented in Qt itself
 class SignalHandler(QObject):

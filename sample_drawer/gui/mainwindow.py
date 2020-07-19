@@ -7,7 +7,7 @@ from PySide2.QtCore import QFile
 
 from .filebrowser import FileBrowser
 from .sampleplayer import SamplePlayer
-from .sampleanalyzer import SampleAnalyzer, FileKey
+from ..sampleanalyzer import SampleAnalyzer, FileKey
 from .metadatabrowser import MetadataBrowser
 
 from . import __path__ as PKG_PATH
