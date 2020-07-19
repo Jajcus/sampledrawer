@@ -52,4 +52,4 @@ CREATE TABLE item_custom_values (
 	UNIQUE (item_id, key_id)
 );
 
-
+CREATE VIRTUAL TABLE item_index USING fts4(metadata_blob);

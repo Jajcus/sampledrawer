@@ -4,7 +4,7 @@ import logging
 import shutil
 import sqlite3
 
-from .samplemetadata import FIXED_METADATA
+from .samplemetadata import FIXED_METADATA, FIXED_METADATA_KEYS
 
 logger = logging.getLogger("library")
 
@@ -103,6 +103,25 @@ class Library:
                     ", ".join(mdtype.name for mdtype in FIXED_METADATA),
                     ", ".join(["?"] * len(FIXED_METADATA)))
             values = [getattr(metadata, mdtype.name) for mdtype in FIXED_METADATA]
+            logging.debug("running: %r with %r", query, values)
+            cur.execute(query, values)
+            item_id = cur.lastrowid
+            logging.debug("item inserted with id: %r", item_id)
+            metadata_blob = []
+            for key in metadata:
+                mdtype = FIXED_METADATA_KEYS.get(key)
+                if mdtype and not mdtype.indexable:
+                    continue
+                value = metadata.get(key)
+                if not value:
+                    continue
+                if isinstance(value, float):
+                    metadata_blob.append("{}={:.2f}".format(key, value))
+                else:
+                    metadata_blob.append("{}={}".format(key, value))
+            metadata_blob = " ".join(metadata_blob)
+            query = "INSERT INTO item_index (rowid, metadata_blob) VALUES (?,?)"
+            values = (item_id, metadata_blob)
             logging.debug("running: %r with %r", query, values)
             cur.execute(query, values)
             if copy:

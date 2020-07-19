@@ -5,19 +5,19 @@ import re
 from collections import namedtuple
 
 MDType = namedtuple("MDType",
-                    "name type editable unit",
-                    defaults=(False, None),
+                    "name type editable unit indexable",
+                    defaults=(False, None, True),
                     )
 
 FIXED_METADATA = [
-        MDType(name="md5", type=str),
-        MDType(name="path", type=str),
-        MDType(name="source", type=str),
+        MDType(name="md5", type=str, indexable=False),
+        MDType(name="path", type=str, indexable=False),
+        MDType(name="source", type=str, indexable=False),
         MDType(name="name", type=str, editable=True),
         MDType(name="format", type=str),
         MDType(name="format_subtype", type=str),
         MDType(name="sample_rate", type=int, unit="frames/s"),
-        MDType(name="channels", type=int),
+        MDType(name="channels", type=int, indexable=False),
         MDType(name="duration", type=float, unit="s"),
         MDType(name="peak_level", type=float, unit="dBFS"),
         ]
