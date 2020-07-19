@@ -62,7 +62,7 @@ class Application:
     def import_files(self):
         analyzer = SampleAnalyzer()
         for path in self.args.import_files:
-            metadata = analyzer.get_file_metadata_sync(path)
+            metadata = analyzer.get_file_metadata(path)
             logging.info(metadata)
             self.library.import_file(metadata)
 
