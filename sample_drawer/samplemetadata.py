@@ -38,11 +38,12 @@ class SampleMetadata:
             for key, value in data.items():
                 mdtype = FIXED_METADATA_KEYS.get(key)
                 if mdtype:
-                    try:
-                        value = mdtype.type(value)
-                        self._data[key] = value
-                    except (ValueError, TypeError):
-                        logging.warning("Invalid %r: %r", key, data[key])
+                    if value is not None:
+                        try:
+                            value = mdtype.type(value)
+                            self._data[key] = value
+                        except (ValueError, TypeError):
+                            logging.warning("Invalid %r: %r", key, data[key])
                 elif not VALID_KEY_RE.match(key):
                     logger.warning("Invalid meta-data key: %r", key)
                 else:
@@ -66,6 +67,24 @@ class SampleMetadata:
         return cls(data)
     def copy(self):
         return self.__class__(self._data, self._tags)
+    def __getattr__(self, key):
+        if key in FIXED_METADATA_D:
+            return self._data.get("_" + key)
+        else:
+            return super().__getattr__(key)
+    def __setattr__(self, key, value):
+        mdtype = FIXED_METADATA_D.get(key)
+        if mdtype:
+            key = "_" + key
+            if value is None:
+                try:
+                    del self._data[key]
+                except KeyError:
+                    pass
+            else:
+                self._data[key] = mdtype.type(value)
+        else:
+            super().__setattr__(key, value)
     def __iter__(self):
         return iter(self._data)
     def __len__(self):
