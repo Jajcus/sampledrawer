@@ -11,6 +11,7 @@ from PySide2.QtWidgets import QApplication
 from .mainwindow import MainWindow
 from .signalhandler import SignalHandler
 from .library import Library
+from .sampleanalyzer import SampleAnalyzer
 
 APP_NAME = "sampledrawer"
 APP_AUTHOR = "Jajcus"
@@ -50,12 +51,24 @@ class Application:
         parser.add_argument('--qt-options', type=shlex.split, action='extend',
                             dest='qt_argv', default=[sys.argv[0]],
                             help='Command line options to pass to the Qt library')
+        parser.add_argument('--import', nargs="+", metavar="PATH",
+                            dest="import_files",
+                            help='Import files to the library')
         self.args = parser.parse_args()
 
     def setup_logging(self):
         logging.basicConfig(level=self.args.debug_level)
 
+    def import_files(self):
+        analyzer = SampleAnalyzer()
+        for path in self.args.import_files:
+            metadata = analyzer.get_file_metadata_sync(path)
+            logging.info(metadata)
+            self.library.import_file(metadata)
+
     def start(self):
+        if self.args.import_files:
+            return self.import_files()
         self.main_window = MainWindow(self.args)
         self.main_window.show()
         signal_handler = SignalHandler()

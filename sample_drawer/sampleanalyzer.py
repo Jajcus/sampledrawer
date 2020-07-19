@@ -1,4 +1,5 @@
 
+import hashlib
 import math
 import os
 import logging
@@ -15,6 +16,8 @@ from .samplemetadata import SampleMetadata
 
 WAVEFORM_RESOLUTION = 200 # samples per second
 
+READ_BLOCK_SIZE = 16*1024*1024
+
 logger = logging.getLogger("sampleanalyzer")
 
 class FileKey:
@@ -24,7 +27,7 @@ class FileKey:
             self.path = path.path
             self.stat = path.stat
         else:
-            self.path = str(path)
+            self.path = os.path.realpath(path)
     def __repr__(self):
         return "FileKey({!r})".format(self.path)
     def __str__(self):
@@ -49,12 +52,61 @@ class FileKey:
                 and self.stat.st_size == other.stat.st_size
                 and self.stat.st_mtime == other.stat.st_mtime)
 
+class SampleAnalyzerWorkerCore:
+    def __init__(self, path):
+        self.path = path
 
-class SampleAnalyzerWorker(QRunnable):
+    def load_data(self):
+        path = str(self.path)
+        file_info = { "path": str(path) }
+        with open(path, "rb") as source_file:
+            with SoundFile(source_file) as snd_file:
+                logger.debug("name: %r", snd_file.name)
+                logger.debug("mode: %r", snd_file.mode)
+                logger.debug("samplerate: %r", snd_file.samplerate)
+                file_info["sample_rate"] = snd_file.samplerate
+                logger.debug("frames: %r", snd_file.frames)
+                file_info["duration"] = float(snd_file.frames) / snd_file.samplerate
+                logger.debug("channels: %r", snd_file.channels)
+                file_info["channels"] = snd_file.channels
+                logger.debug("format: %r", snd_file.format)
+                file_info["format"] = snd_file.format
+                logger.debug("subtype: %r", snd_file.subtype)
+                file_info["format_subtype"] = snd_file.subtype
+                logger.debug("endian: %r", snd_file.endian)
+                logger.debug("format_info: %r", snd_file.format_info)
+                logger.debug("subtype_info: %r", snd_file.subtype_info)
+                logger.debug("sections: %r", snd_file.sections)
+                logger.debug("closed: %r", snd_file.closed)
+                logger.debug("extra_info: %r", snd_file.extra_info)
+                frames = snd_file.read()
+                peak_level = max(numpy.amax(frames), -numpy.amin(frames))
+                if not peak_level:
+                    peak_level_db = -math.inf
+                    file_info["peak_level"] = peak_level_db
+                else:
+                    try:
+                        peak_level_db = 20*math.log10(peak_level)
+                        file_info["peak_level"] = peak_level_db
+                    except ValueError:
+                        logger.error("Cannot convert %r to dBFS", peak_level)
+                logger.debug("%r frames read", len(frames))
+            source_file.seek(0)
+            md5_hash = hashlib.md5()
+            while True:
+                data = source_file.read(READ_BLOCK_SIZE)
+                if not data:
+                    break
+                md5_hash.update(data)
+            file_info["md5"] = md5_hash.hexdigest()
 
-    def __init__(self, filename):
+        return file_info
+
+class SampleAnalyzerWorker(QRunnable, SampleAnalyzerWorkerCore):
+
+    def __init__(self, path):
         QRunnable.__init__(self)
-        self.filename = filename
+        SampleAnalyzerWorkerCore.__init__(self, path)
         self.signals = self.Signals()
 
     @Slot()
@@ -62,49 +114,15 @@ class SampleAnalyzerWorker(QRunnable):
         """
         Gather sample meta-data in the background.
         """
-
+        logger.debug("Thread start")
         try:
             file_info = self.load_data()
             self.signals.finished.emit(file_info)
         except (IOError, RuntimeError) as err:
-            logger.error("Cannot load %r: %s", str(self.filename), err)
+            logger.error("Cannot load %r: %s", str(self.path), err)
             self.signals.error.emit(err)
         logger.debug("Thread complete")
 
-    def load_data(self):
-        logger.debug("Thread start")
-        file_info = { "filename": str(self.filename) }
-        with SoundFile(str(self.filename)) as snd_file:
-            logger.debug("name: %r", snd_file.name)
-            logger.debug("mode: %r", snd_file.mode)
-            logger.debug("samplerate: %r", snd_file.samplerate)
-            file_info["samplerate"] = snd_file.samplerate
-            logger.debug("frames: %r", snd_file.frames)
-            file_info["duration"] = float(snd_file.frames) / snd_file.samplerate
-            logger.debug("channels: %r", snd_file.channels)
-            logger.debug("format: %r", snd_file.format)
-            file_info["format"] = snd_file.format
-            logger.debug("subtype: %r", snd_file.subtype)
-            file_info["subtype"] = snd_file.subtype
-            logger.debug("endian: %r", snd_file.endian)
-            logger.debug("format_info: %r", snd_file.format_info)
-            logger.debug("subtype_info: %r", snd_file.subtype_info)
-            logger.debug("sections: %r", snd_file.sections)
-            logger.debug("closed: %r", snd_file.closed)
-            logger.debug("extra_info: %r", snd_file.extra_info)
-            frames = snd_file.read()
-            peek_level = max(numpy.amax(frames), -numpy.amin(frames))
-            if not peek_level:
-                peek_level_db = -math.inf
-                file_info["peek_level"] = peek_level_db
-            else:
-                try:
-                    peek_level_db = 20*math.log10(peek_level)
-                    file_info["peek_level"] = peek_level_db
-                except ValueError:
-                    logger.error("Cannot convert %r to dBFS", peek_level)
-            logger.debug("%r frames read", len(frames))
-        return file_info
     class Signals(QObject):
         finished = Signal(dict)
         error = Signal(str)
@@ -155,3 +173,11 @@ class SampleAnalyzer(QObject):
         else:
             return None
 
+    def get_file_metadata_sync(self, path):
+        if not isinstance(path, FileKey):
+            path = FileKey(path)
+        file_info = self._cache.get(path)
+        if not file_info:
+            worker = SampleAnalyzerWorkerCore(path)
+            file_info = worker.load_data()
+        return SampleMetadata.from_file_info(file_info)

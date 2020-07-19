@@ -1,12 +1,21 @@
 
 import os
 import logging
+import shutil
 import sqlite3
+
+from .samplemetadata import FIXED_METADATA
 
 logger = logging.getLogger("library")
 
 from . import __path__ as PKG_PATH
 SCHEMA_FILENAME = os.path.join(PKG_PATH[0], "schema.sql")
+
+class LibraryError(Exception):
+    pass
+
+class LibraryConflictError(LibraryError):
+    pass
 
 DATABASE_VERSION = 0
 
@@ -66,4 +75,38 @@ class Library:
                           version, DATABASE_VERSION)
             self.app.exit(1)
         self.db = db
+
+    def get_library_object_path(self, metadata):
+        md5 = metadata["_md5"]
+        ext = metadata.get("_format")
+        if ext:
+            ext = "." + ext.lower()
+        else:
+            ext = ".bin"
+        return os.path.join(self.base_path, md5[0], md5[1:3], md5 + ext)
+
+    def import_file(self, metadata, copy=True):
+        if "_md5" not in metadata or "_path" not in metadata:
+            raise ValueError("md5 and path are required for file import")
+        path = metadata["_path"]
+        with self.db:
+            cur = self.db.cursor()
+            cur.execute("SELECT id FROM items WHERE md5=? LIMIT 1",
+                        (metadata["_md5"],))
+            if cur.fetchone() is not None:
+                raise LibraryConflictError("Already there")
+            metadata = metadata.copy()
+            if copy:
+                metadata["_path"] = None
+            metadata["_source"] = "file:{}".format(path)
+            query = "INSERT INTO items({}) VALUES ({})".format(
+                    ", ".join(mdtype.name for mdtype in FIXED_METADATA),
+                    ", ".join(["?"] * len(FIXED_METADATA)))
+            values = [metadata.get("_" + mdtype.name) for mdtype in FIXED_METADATA]
+            logging.debug("running: %r with %r", query, values)
+            cur.execute(query, values)
+            if copy:
+                target_path = self.get_library_object_path(metadata)
+                os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                shutil.copy(path, target_path)
 

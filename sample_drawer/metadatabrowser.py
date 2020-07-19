@@ -26,7 +26,8 @@ class MetadataBrowser(QObject):
         if metadata:
             self.model.setRowCount(len(self.metadata))
             for i, key in enumerate(sorted(metadata)):
-                self.model.setItem(i, 0, QStandardItem(key));
-                self.model.setItem(i, 1, QStandardItem(str(metadata[key])));
+                fmt_key, fmt_value = metadata.get_formatted(key)
+                self.model.setItem(i, 0, QStandardItem(fmt_key));
+                self.model.setItem(i, 1, QStandardItem(fmt_value));
         else:
             self.model.setRowCount(0)
