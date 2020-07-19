@@ -16,6 +16,10 @@ from .sampleanalyzer import SampleAnalyzer
 APP_NAME = "sampledrawer"
 APP_AUTHOR = "Jajcus"
 
+DEFAULT_IMPORT_RULES = [
+        ("_path", r"^(.*/)?([^/]*?)(\.[^/.]*)?$", {"_name": "{2}"}),
+        ]
+
 class Exitting(BaseException):
     """Raised to abort code after Application.exit()"""
     pass
@@ -59,11 +63,12 @@ class Application:
     def setup_logging(self):
         logging.basicConfig(level=self.args.debug_level)
 
-    def import_files(self):
+    def import_files(self, metadata_rules=DEFAULT_IMPORT_RULES):
         analyzer = SampleAnalyzer()
         for path in self.args.import_files:
             metadata = analyzer.get_file_metadata(path)
-            logging.info(metadata)
+            logging.debug(metadata)
+            metadata = metadata.rewrite(metadata_rules)
             self.library.import_file(metadata)
 
     def start(self):

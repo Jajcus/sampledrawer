@@ -119,3 +119,53 @@ class SampleMetadata:
         self._data[key] = value
     def __contains__(self, key):
         return key in self._data
+    def rewrite(self, rules):
+        """Return copy rewriten using given rules.
+
+        Each rule is a tuple: (field, regexp, substitutions)
+        Regexp is applied to the value of a given field and if it matches, then
+        metadata fields will be changed according to substitutions, which
+        are mapping from field name to .format() string, that uses regexp groups
+        and current metadata values."""
+        data = self._data
+        tags = self._tags
+        for key, regexp, substs in rules:
+            value = data.get(key)
+            if value is None:
+                logging.debug("Ignoring rewrite rule for %r – no value", key)
+                continue
+            logging.debug("Applying %r to %r=%r", regexp, key, value)
+            if isinstance(regexp, str):
+                regexp = re.compile(regexp)
+            if not isinstance(value, str):
+                value = str(value)
+            match = regexp.match(value)
+            if not match:
+                logging.debug("no match")
+                continue
+            format_list = [match.group(0)] + list(match.groups())
+            format_dict = dict(data)
+            format_dict.update(match.groupdict())
+            for target, pattern in substs.items():
+                mdtype = FIXED_METADATA_KEYS.get(target)
+                if mdtype:
+                    if not mdtype.editable:
+                        logging.warning("%r is not editable, not substituting", target)
+                        continue
+                elif not VALID_KEY_RE.match(target):
+                    logging.warning("%r is not a valid key, ignoring", target)
+                    continue
+                logging.debug("setting %r with pattern %r (%r, %r)",
+                              target, pattern, format_list, format_dict)
+                try:
+                    new_value = pattern.format(*format_list, **format_dict)
+                except KeyError as err:
+                    logging.warning("%r substitution failed: key not found: %r",
+                                    pattern, str(err))
+                    continue
+                except (IndexError, ValueError, TypeError) as err:
+                    logging.warning("%r substitution failed: %s", err)
+                    continue
+                logging.debug("new value: %r", new_value)
+                data[target] = new_value
+        return self.__class__(data, tags)
