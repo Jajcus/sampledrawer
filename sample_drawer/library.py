@@ -12,10 +12,16 @@ from . import __path__ as PKG_PATH
 SCHEMA_FILENAME = os.path.join(PKG_PATH[0], "schema.sql")
 
 class LibraryError(Exception):
-    pass
+    def __str__(self):
+        return str(self.args[0])
 
 class LibraryConflictError(LibraryError):
-    pass
+    @property
+    def md5(self):
+        return self.args[1]
+    @property
+    def existing_name(self):
+        return self.args[2]
 
 DATABASE_VERSION = 0
 
@@ -40,6 +46,7 @@ class Library:
             try:
                 logging.info("Creating new database %r", db_path)
                 db = sqlite3.connect(db_path)
+                db.execute("PRAGMA foreign_keys = 1")
                 db.executescript(open(SCHEMA_FILENAME).read())
                 db.execute("INSERT INTO db_meta(id, version) VALUES (1, ?)",
                            (DATABASE_VERSION,))
@@ -59,6 +66,7 @@ class Library:
         logging.info("Opening database %r", db_path)
         try:
             db = sqlite3.connect(db_path)
+            db.execute("PRAGMA foreign_keys = 1")
             cur = db.cursor()
             cur.execute("SELECT version FROM db_meta WHERE id=1")
             db.commit()
@@ -92,9 +100,10 @@ class Library:
             raise ValueError("md5 and path are required for file import")
         with self.db:
             cur = self.db.cursor()
-            cur.execute("SELECT id FROM items WHERE md5=? LIMIT 1", (md5,))
-            if cur.fetchone() is not None:
-                raise LibraryConflictError("Already there")
+            cur.execute("SELECT id, name FROM items WHERE md5=? LIMIT 1", (md5,))
+            row = cur.fetchone()
+            if row is not None:
+                raise LibraryConflictError("Already there", md5, row[1])
             metadata = metadata.copy()
             if copy:
                 metadata.path = None
@@ -107,6 +116,16 @@ class Library:
             cur.execute(query, values)
             item_id = cur.lastrowid
             logging.debug("item inserted with id: %r", item_id)
+            for tag in metadata.tags:
+                cur.execute("SELECT id FROM tags WHERE name=?", (tag,))
+                row = cur.fetchone()
+                if row:
+                    tag_id = row[0]
+                else:
+                    cur.execute("INSERT INTO tags(name) VALUES(?)", (tag,))
+                    tag_id = cur.lastrowid
+                cur.execute("INSERT INTO item_tags(item_id, tag_id)"
+                            " VALUES(?, ?)", (item_id, tag_id))
             metadata_blob = []
             for key in metadata:
                 mdtype = FIXED_METADATA_KEYS.get(key)

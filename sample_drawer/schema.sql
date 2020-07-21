@@ -26,18 +26,13 @@ CREATE TABLE items (
 
 CREATE TABLE tags (
 	id INTEGER PRIMARY KEY,
-	name TEXT NOT NULL,
-	is_category BOOLEAN DEFAULT FALSE NOT NULL,
-	parent INTEGER NOT NULL DEFAULT 0 REFERENCES categories(id),
-
-	UNIQUE (name, parent)
+	name TEXT NOT NULL UNIQUE
 );
-INSERT INTO tags(id,name,is_category,parent) VALUES (0, '', TRUE, 0); -- root category
 CREATE TABLE item_tags (
 	id INTEGER PRIMARY KEY,
-	item_id INTEGER NOT NULL REFERENCES items(id),
-	tag_id INTEGER NOT NULL REFERENCES tags(id),
-	name TEXT NOT NULL UNIQUE
+	item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+	tag_id INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+        UNIQUE (item_id, tag_id)
 );
 
 CREATE TABLE custom_keys (
@@ -46,8 +41,8 @@ CREATE TABLE custom_keys (
 );
 CREATE TABLE item_custom_values (
 	id INTEGER PRIMARY KEY,
-	item_id INTEGER NOT NULL REFERENCES items(id),
-	key_id INTEGER NOT NULL REFERENCES custom_keys(id),
+	item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+	key_id INTEGER NOT NULL REFERENCES custom_keys(id) ON DELETE CASCADE,
 	value TEXT,
 	UNIQUE (item_id, key_id)
 );

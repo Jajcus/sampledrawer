@@ -10,7 +10,7 @@ from PySide2.QtWidgets import QApplication
 
 from .gui.mainwindow import MainWindow
 from .gui.signalhandler import SignalHandler
-from .library import Library
+from .library import Library, LibraryConflictError
 from .sampleanalyzer import SampleAnalyzer
 
 APP_NAME = "sampledrawer"
@@ -18,6 +18,7 @@ APP_AUTHOR = "Jajcus"
 
 DEFAULT_IMPORT_RULES = [
         ("_path", r"^(.*/)?([^/]*?)(\.[^/.]*)?$", {"_name": "{2}"}),
+        ("_auto_category", r"^/.*$", {"_tags": "{_tags} {0}"}),
         ]
 
 class Exitting(BaseException):
@@ -45,7 +46,8 @@ class Application:
         parser = argparse.ArgumentParser(description='Sample Drawer – audio sample browser and organizer.')
         parser.set_defaults(debug_level=logging.INFO)
         parser.add_argument('--root', action='store', dest='root',
-                            help='Display only this directory in filesystem browser')
+                            help='For GUI: Display only this directory in filesystem browser'
+                            ' For import: root for automatic categorization')
         parser.add_argument('--debug', action='store_const',
                             dest='debug_level', const=logging.DEBUG,
                             help='Enable debug output')
@@ -68,8 +70,12 @@ class Application:
         for path in self.args.import_files:
             metadata = analyzer.get_file_metadata(path)
             logging.debug(metadata)
-            metadata = metadata.rewrite(metadata_rules)
-            self.library.import_file(metadata)
+            metadata = metadata.rewrite(metadata_rules, root=self.args.root)
+            try:
+                self.library.import_file(metadata)
+            except LibraryConflictError as err:
+                logging.info("File %r (%r) already in the library, known as %r."
+                            " Ignoring it.", path, err.md5, err.existing_name)
 
     def start(self):
         if self.args.import_files:
