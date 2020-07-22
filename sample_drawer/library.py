@@ -116,7 +116,7 @@ class Library:
             cur.execute(query, values)
             item_id = cur.lastrowid
             logging.debug("item inserted with id: %r", item_id)
-            for tag in metadata.tags:
+            for tag in metadata.get_tags():
                 cur.execute("SELECT id FROM tags WHERE name=?", (tag,))
                 row = cur.fetchone()
                 if row:

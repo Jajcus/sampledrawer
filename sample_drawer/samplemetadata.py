@@ -64,9 +64,28 @@ class SampleMetadata:
         return cls(data)
     def copy(self):
         return self.__class__(self._data, self._tags)
-    @property
-    def tags(self):
+    def get_tags(self):
         return set(self._tags)
+    def set_tags(self, tags):
+        new_tags = set()
+        for tag in tags:
+            if not VALID_TAG_RE.match(tag):
+                logger.warning("Invalid tag: %r", key)
+            else:
+                new_tags.add(tag)
+        object.__setattr__(self, "_tags", new_tags)
+    def add_tags(self, tags):
+        for tag in tags:
+            if not VALID_TAG_RE.match(tag):
+                logger.warning("Invalid tag: %r", key)
+            else:
+                self._tags.add(tag)
+    def remove_tags(self, tags):
+        for tag in tags:
+            if not VALID_TAG_RE.match(tag):
+                logger.warning("Invalid tag: %r", key)
+            else:
+                self._tags.discard(tag)
     def __getattr__(self, key):
         if key in FIXED_METADATA_D:
             return self._data.get("_" + key)

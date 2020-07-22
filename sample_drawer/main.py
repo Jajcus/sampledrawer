@@ -62,6 +62,8 @@ class Application:
         parser.add_argument('--import', nargs="+", metavar="PATH",
                             dest="import_files",
                             help='Import files to the library')
+        parser.add_argument('--tag', action="append", dest='tags',
+                            help='Tag to select or add')
         self.args = parser.parse_args()
 
     def setup_logging(self):
@@ -75,6 +77,8 @@ class Application:
             return False
         logging.debug(metadata)
         metadata = metadata.rewrite(metadata_rules, root=root)
+        if self.args.tags:
+            metadata.add_tags(self.args.tags)
         try:
             self.library.import_file(metadata)
         except LibraryConflictError as err:
