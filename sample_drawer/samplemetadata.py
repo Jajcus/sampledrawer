@@ -131,16 +131,19 @@ class SampleMetadata:
         data["_tags"] = " ".join(self._tags)
         if root:
             logger.debug("Root %r given, auto-generating category", root)
-            root = os.path.join(os.path.normpath(root), "")
+            root = os.path.normpath(root)
             directory = os.path.dirname(self.path)
-            if os.path.commonprefix([directory, root]) == root:
+            if os.path.commonpath([directory, root]) == root:
                 relpath = os.path.relpath(directory, root)
-                if os.path.sep != "/":
-                    relpath = relpath.replace(os.path.sep, "/")
-                category = INVALID_TAG_CHAR.sub("_", relpath)
-                data["_auto_category"] = "/" + category
+                if relpath == ".":
+                    logger.debug("no category in path")
+                else:
+                    if os.path.sep != "/":
+                        relpath = relpath.replace(os.path.sep, "/")
+                    category = INVALID_TAG_CHAR.sub("_", relpath)
+                    data["_auto_category"] = "/" + category
             else:
-                logger.debug("%r not under %r", path, root)
+                logger.debug("%r not under %r", self.path, root)
         for key, regexp, substs in rules:
             value = data.get(key)
             if value is None:
@@ -177,7 +180,10 @@ class SampleMetadata:
                     continue
                 logging.debug("new value: %r", new_value)
                 data[target] = new_value
-        del data["_auto_category"]
+        try:
+            del data["_auto_category"]
+        except KeyError:
+            pass
         tags = data["_tags"].split()
         del data["_tags"]
         return self.__class__(data, tags)
