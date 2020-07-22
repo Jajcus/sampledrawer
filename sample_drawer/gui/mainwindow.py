@@ -6,6 +6,7 @@ from PySide2.QtUiTools import QUiLoader
 from PySide2.QtCore import QFile
 
 from .filebrowser import FileBrowser
+from .librarytree import LibraryTree
 from .sampleplayer import SamplePlayer
 from .sampleanalyzer import AsyncSampleAnalyzer, FileKey
 from .metadatabrowser import MetadataBrowser
@@ -17,12 +18,14 @@ logger = logging.getLogger("mainwindow")
 UI_FILENAME = os.path.join(PKG_PATH[0], "mainwindow.ui")
 
 class MainWindow:
-    def __init__(self, program_args):
+    def __init__(self, app):
+        self.app = app
         ui_file = QFile(UI_FILENAME)
         ui_file.open(QFile.ReadOnly)
         loader = QUiLoader()
         self.window = loader.load(ui_file)
-        self.file_browser = FileBrowser(self.window, program_args)
+        self.file_browser = FileBrowser(app, self.window)
+        self.lib_tree = LibraryTree(app, self.window)
         self.sample_player = SamplePlayer(self.window)
         self.sample_analyzer = AsyncSampleAnalyzer()
         self.metadata_browser = MetadataBrowser(self.window.metadata_view)

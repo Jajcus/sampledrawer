@@ -15,15 +15,16 @@ NAME_FILTERS = [
 
 class FileBrowser(QObject):
     file_selected = Signal(str)
-    def __init__(self, window, program_args):
+    def __init__(self, app, window):
         QObject.__init__(self)
+        self.app = app
         self.file_tree = window.file_tree
         self.show_hidden_chk = window.show_hidden
         self.name_filter_combo = window.name_filter
         self.model = QFileSystemModel(self.file_tree)
-        if program_args.root:
-            self.model.setRootPath(program_args.root)
-            self.current_path = program_args.root
+        if app.args.root:
+            self.model.setRootPath(app.args.root)
+            self.current_path = app.args.root
         else:
             self.model.setRootPath("")
             self.current_path = os.path.realpath(os.curdir)
@@ -31,7 +32,7 @@ class FileBrowser(QObject):
         self.file_tree.sortByColumn(0, Qt.AscendingOrder)
         self.file_tree.setSortingEnabled(True)
         index = self.model.index(self.current_path)
-        if program_args.root:
+        if app.args.root:
             self.file_tree.setRootIndex(index)
         self.file_tree.setExpanded(index, True)
         self.file_tree.setCurrentIndex(index)

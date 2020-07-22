@@ -148,3 +148,9 @@ class Library:
                 os.makedirs(os.path.dirname(target_path), exist_ok=True)
                 shutil.copy(path, target_path)
 
+    def get_tags(self):
+        with self.db:
+            cur = self.db.cursor()
+            cur.execute("SELECT name FROM tags")
+            for row in cur.fetchall():
+                yield row[0]

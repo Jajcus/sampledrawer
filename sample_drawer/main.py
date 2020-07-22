@@ -108,7 +108,7 @@ class Application:
     def start(self):
         if self.args.import_files:
             return self.import_files()
-        self.main_window = MainWindow(self.args)
+        self.main_window = MainWindow(self)
         self.main_window.show()
         signal_handler = SignalHandler()
         signal_handler.activate()
