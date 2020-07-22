@@ -1,6 +1,7 @@
 
 import argparse
 import logging
+import os
 import shlex
 import sys
 
@@ -40,6 +41,7 @@ class Application:
         logging.debug("qt_argv: %r", self.args.qt_argv)
         self.qapp = QApplication(self.args.qt_argv)
 
+        self.analyzer = SampleAnalyzer()
         self.library = Library(self)
 
     def parse_args(self):
@@ -65,17 +67,39 @@ class Application:
     def setup_logging(self):
         logging.basicConfig(level=self.args.debug_level)
 
+    def import_file(self, metadata_rules, path, root):
+        try:
+            metadata = self.analyzer.get_file_metadata(path)
+        except (OSError, RuntimeError) as err:
+            logging.warning("Cannot import %r: %s", path, err)
+            return False
+        logging.debug(metadata)
+        metadata = metadata.rewrite(metadata_rules, root=root)
+        try:
+            self.library.import_file(metadata)
+        except LibraryConflictError as err:
+            logging.info("File %r (%r) already in the library, known as %r."
+                        " Ignoring it.", path, err.md5, err.existing_name)
+            return False
+        return True
+
+    def import_dir(self, metadata_rules, path):
+        if self.args.root:
+            root = self.args.root
+        else:
+            root = path
+        for dirpath, dirnames, filenames in os.walk(path):
+            for name in filenames:
+                file_path = os.path.join(dirpath, name)
+                logging.info("Importing %r", file_path)
+                self.import_file(metadata_rules, file_path, root)
+
     def import_files(self, metadata_rules=DEFAULT_IMPORT_RULES):
-        analyzer = SampleAnalyzer()
         for path in self.args.import_files:
-            metadata = analyzer.get_file_metadata(path)
-            logging.debug(metadata)
-            metadata = metadata.rewrite(metadata_rules, root=self.args.root)
-            try:
-                self.library.import_file(metadata)
-            except LibraryConflictError as err:
-                logging.info("File %r (%r) already in the library, known as %r."
-                            " Ignoring it.", path, err.md5, err.existing_name)
+            if os.path.isdir(path):
+                self.import_dir(metadata_rules, path)
+            else:
+                self.import_file(metadata_rules, path, root=self.args.root)
 
     def start(self):
         if self.args.import_files:
