@@ -20,7 +20,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout_6">
+   <layout class="QHBoxLayout" name="horizontalLayout_3">
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="orientation">
@@ -35,6 +35,13 @@
          <widget class="QLabel" name="label_3">
           <property name="text">
            <string>Library items</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="search_query_input">
+          <property name="placeholderText">
+           <string>Search query</string>
           </property>
          </widget>
         </item>
@@ -67,7 +74,7 @@
      <x>0</x>
      <y>0</y>
      <width>897</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -131,7 +138,11 @@
    <widget class="QWidget" name="dockWidgetContents">
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
-      <widget class="QTreeView" name="file_tree"/>
+      <widget class="QTreeView" name="file_tree">
+       <property name="whatsThis">
+        <string>File browser</string>
+       </property>
+      </widget>
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
@@ -173,7 +184,11 @@
    <widget class="QWidget" name="dockWidgetContents_3">
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
-      <widget class="QTreeView" name="lib_tree"/>
+      <widget class="QTreeView" name="lib_tree">
+       <property name="whatsThis">
+        <string>Tags in the library, availabe for item filtering</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
