@@ -26,8 +26,11 @@ CREATE TABLE items (
 
 CREATE TABLE tags (
 	id INTEGER PRIMARY KEY,
-	name TEXT NOT NULL UNIQUE
+	name TEXT NOT NULL UNIQUE,
+	item_count INTEGER DEFAULT 0
 );
+INSERT INTO tags(id, name) VALUES (0, "/"); -- pseudo-tag to count all library items
+
 CREATE TABLE item_tags (
 	id INTEGER PRIMARY KEY,
 	item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
@@ -48,3 +51,49 @@ CREATE TABLE item_custom_values (
 );
 
 CREATE VIRTUAL TABLE item_index USING fts4(metadata_blob);
+
+
+CREATE TRIGGER item_tags_insert_update_tag_count AFTER INSERT ON item_tags
+BEGIN
+	UPDATE tags SET item_count = tags.item_count + 1
+		WHERE tags.id = new.tag_id
+		AND (SELECT scratchpad_id FROM items WHERE id=new.item_id LIMIT 1) IS NULL;
+END;
+
+CREATE TRIGGER item_tags_delete_update_tag_count AFTER DELETE ON item_tags
+BEGIN
+	UPDATE tags SET item_count = tags.item_count - 1
+		WHERE tags.id = old.tag_id
+		AND (SELECT scratchpad_id FROM items WHERE id=old.item_id LIMIT 1) IS NULL;
+END;
+
+CREATE TRIGGER items_insert_update_tag_count AFTER INSERT ON items
+BEGIN
+	UPDATE tags SET item_count = tags.item_count + 1
+		WHERE tags.id = 0 AND new.scratchpad_id IS NULL;
+END;
+
+CREATE TRIGGER items_delete_update_tag_count AFTER DELETE ON items
+BEGIN
+	UPDATE tags SET item_count = tags.item_count - 1
+		WHERE tags.id = 0 AND old.scratchpad_id IS NULL;
+END;
+
+CREATE TRIGGER items_update_update_tag_count AFTER UPDATE ON items
+BEGIN
+	UPDATE tags SET item_count = tags.item_count + 1
+		WHERE old.scratchpad_id IS NOT NULL
+		AND new.scratchpad_id IS NULL
+		AND (
+			tags.id IN (SELECT tag_id FROM item_tags WHERE item_id = new.id)
+			OR tags.id = 0
+	        );
+
+	UPDATE tags SET item_count = tags.item_count - 1
+		WHERE old.scratchpad_id IS NULL
+		AND new.scratchpad_id IS NOT NULL
+		AND (
+			tags.id IN (SELECT tag_id FROM item_tags WHERE item_id = old.id)
+			OR tags.id = 0
+		);
+END;

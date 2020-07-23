@@ -4,6 +4,8 @@ import logging
 import shutil
 import sqlite3
 
+from collections import defaultdict
+
 from .samplemetadata import FIXED_METADATA, FIXED_METADATA_KEYS
 
 logger = logging.getLogger("library")
@@ -116,7 +118,18 @@ class Library:
             cur.execute(query, values)
             item_id = cur.lastrowid
             logging.debug("item inserted with id: %r", item_id)
-            for tag in metadata.get_tags():
+            tags = metadata.get_tags()
+
+            # add missing parent tags
+            # as  /a/b/c implies /a/b and /a
+            for tag in list(tags):
+                if tag.startswith("/"):
+                    parent = tag.rsplit("/", 1)[0]
+                    while parent:
+                        tags.add(parent)
+                        parent = parent.rsplit("/", 1)[0]
+
+            for tag in tags:
                 cur.execute("SELECT id FROM tags WHERE name=?", (tag,))
                 row = cur.fetchone()
                 if row:
@@ -125,7 +138,8 @@ class Library:
                     cur.execute("INSERT INTO tags(name) VALUES(?)", (tag,))
                     tag_id = cur.lastrowid
                 cur.execute("INSERT INTO item_tags(item_id, tag_id)"
-                            " VALUES(?, ?)", (item_id, tag_id))
+                                " VALUES(?, ?)", (item_id, tag_id))
+
             metadata_blob = []
             for key in metadata:
                 mdtype = FIXED_METADATA_KEYS.get(key)
@@ -151,6 +165,6 @@ class Library:
     def get_tags(self):
         with self.db:
             cur = self.db.cursor()
-            cur.execute("SELECT name FROM tags")
+            cur.execute("SELECT name, item_count FROM tags")
             for row in cur.fetchall():
-                yield row[0]
+                yield tuple(row)
