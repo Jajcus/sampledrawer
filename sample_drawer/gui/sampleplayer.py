@@ -10,9 +10,9 @@ ffi = FFI()
 logger = logging.getLogger("sampleplayer")
 
 class SamplePlayer:
-    def __init__(self, controls):
-        self.controls = controls
-        self.controls.play_btn.clicked.connect(self.play_clicked)
+    def __init__(self, window):
+        self.window = window
+        self.window.play_btn.clicked.connect(self.play_clicked)
         self.duration = None
         device = QAudioDeviceInfo.defaultOutputDevice()
         playback_format = device.preferredFormat()
@@ -44,6 +44,8 @@ class SamplePlayer:
     @Slot(int)
     def decoder_pos_changed(self, pos):
         logger.debug("Decoder position: %i", pos)
+        time_pos = pos / 1000.0
+        self.window.waveform.set_cursor_position(time_pos)
 
     @Slot(QAudioDecoder.State)
     def decoder_state_changed(self, state):
@@ -113,7 +115,7 @@ class SamplePlayer:
     def file_selected(self, path):
         if path:
             self.decoder.setSourceFilename(path)
-            self.controls.play_btn.setEnabled(True)
+            self.window.play_btn.setEnabled(True)
 
     @Slot()
     def play_clicked(self):

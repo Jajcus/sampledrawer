@@ -22,6 +22,8 @@ DEFAULT_IMPORT_RULES = [
         ("_auto_category", r"^/.*$", {"_tags": "{_tags} {0}"}),
         ]
 
+LOG_FORMAT = "%(asctime)-15s %(message)s"
+
 class Exitting(BaseException):
     """Raised to abort code after Application.exit()"""
     pass
@@ -67,7 +69,8 @@ class Application:
         self.args = parser.parse_args()
 
     def setup_logging(self):
-        logging.basicConfig(level=self.args.debug_level)
+        logging.basicConfig(level=self.args.debug_level,
+                            format=LOG_FORMAT)
 
     def import_file(self, metadata_rules, path, root):
         try:

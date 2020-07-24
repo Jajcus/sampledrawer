@@ -42,8 +42,23 @@ class AsyncSampleAnalyzer(QObject):
     def __init__(self):
         QObject.__init__(self)
         self.threadpool = QThreadPool()
-        self._waiting_for_metadata = {}
+        self._waiting_for_info = {}
         self._cache = LRUCache(maxsize=10)
+
+    def request_waveform(self, path, callback = None):
+        if isinstance(path, FileKey):
+            file_key = path
+        else:
+            file_key = FileKey(path)
+        file_info = self._cache.get(file_key)
+        if file_info is not None:
+            waveform = file_info.get("waveform")
+            callback(file_key, waveform)
+            return
+        def our_callback(path, file_info):
+            waveform = file_info.get("waveform")
+            callback(path, waveform)
+        self._request_info(path, callback=our_callback)
 
     def request_file_metadata(self, path, callback = None):
         if isinstance(path, FileKey):
@@ -55,25 +70,30 @@ class AsyncSampleAnalyzer(QObject):
             metadata = SampleMetadata.from_file_info(file_info)
             callback(file_key, metadata)
             return
-        logger.debug("Metadata for %r not known yet", str(path))
-        waiting_list = self._waiting_for_metadata.get(file_key)
+        def our_callback(path, file_info):
+            metadata = SampleMetadata.from_file_info(file_info)
+            callback(path, metadata)
+        self._request_info(path, callback=our_callback)
+
+    def _request_info(self, file_key, callback):
+        logger.debug("File info for %r not known yet", str(file_key))
+        waiting_list = self._waiting_for_info.get(file_key)
         if waiting_list:
             logger.debug("Already requested, adding to the waiting list")
-            waitin_list.append(callback)
+            waiting_list.append(callback)
         else:
             worker = SampleAnalyzerWorker(file_key)
             self.threadpool.start(worker)
             our_callback = partial(self._file_info_received, file_key)
-            self._waiting_for_metadata[file_key] = [callback]
+            self._waiting_for_info[file_key] = [callback]
             worker.signals.finished.connect(Slot()(our_callback))
 
     def _file_info_received(self, file_key, file_info):
         logger.debug("file_info_received for %r called with %r", file_key, file_info)
         self._cache.put(file_key, file_info)
-        callbacks = self._waiting_for_metadata.pop(file_key)
-        metadata = SampleMetadata.from_file_info(file_info)
+        callbacks = self._waiting_for_info.pop(file_key)
         for callback in callbacks:
-            callback(file_key, metadata)
+            callback(file_key, file_info)
 
     def get_file_info(self, path):
         if not isinstance(path, FileKey):
