@@ -6,7 +6,7 @@ import sqlite3
 
 from collections import defaultdict
 
-from .samplemetadata import FIXED_METADATA, FIXED_METADATA_KEYS
+from .samplemetadata import FIXED_METADATA_D, FIXED_METADATA_KEYS, SampleMetadata
 
 logger = logging.getLogger("library")
 
@@ -48,6 +48,7 @@ class Library:
             try:
                 logging.info("Creating new database %r", db_path)
                 db = sqlite3.connect(db_path)
+                db.row_factory = sqlite3.Row
                 db.execute("PRAGMA foreign_keys = 1")
                 db.executescript(open(SCHEMA_FILENAME).read())
                 db.execute("INSERT INTO db_meta(id, version) VALUES (1, ?)",
@@ -68,6 +69,7 @@ class Library:
         logging.info("Opening database %r", db_path)
         try:
             db = sqlite3.connect(db_path)
+            db.row_factory = sqlite3.Row
             db.execute("PRAGMA foreign_keys = 1")
             cur = db.cursor()
             cur.execute("SELECT version FROM db_meta WHERE id=1")
@@ -168,3 +170,42 @@ class Library:
             cur.execute("SELECT name, item_count FROM tags")
             for row in cur.fetchall():
                 yield tuple(row)
+
+    def get_items(self, query, **kwargs):
+        if isinstance(query, tuple):
+            query, params = query
+        if isinstance(query, str):
+            params = ()
+        else:
+            query, params = query.as_sql(**kwargs)
+        result = []
+        with self.db:
+            cur = self.db.cursor()
+            logging.debug("running: %r with %r", query, params)
+            cur.execute(query, params)
+            for row in cur.fetchall():
+                result.append(self._metadata_from_row(row))
+        return result
+
+    def _metadata_from_row(self, row):
+        data = {}
+        for key in row.keys():
+            if key in FIXED_METADATA_D:
+                data["_" + key] = row[key]
+
+        # FIXME: add custom key support
+
+        item_id = row['id']
+        logging.debug("Looking for tags of item %r", item_id)
+        cur = self.db.cursor()
+        cur.execute("SELECT name"
+                    " FROM tags JOIN item_tags ON (tag_id = tags.id)"
+                    " WHERE item_id=?", (item_id,))
+        db_tags = [r[0] for r in cur.fetchall()]
+        tags = []
+        for tag in sorted(db_tags, reverse=True):
+            if tag.startswith("/") and tags and tags[-1].startswith(tag + "/"):
+                # leave only leaf tags
+                continue
+            tags.append(tag)
+        return SampleMetadata(data, tags)

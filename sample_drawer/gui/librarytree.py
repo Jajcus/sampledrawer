@@ -7,6 +7,8 @@ from PySide2.QtWidgets import QApplication
 from PySide2.QtWidgets import QAbstractItemView
 from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem
 
+from ..search import TagQuery
+
 logger = logging.getLogger("librarytree")
 
 class LibraryTree(QObject):
@@ -57,9 +59,21 @@ class LibraryTree(QObject):
             icon = QIcon.fromTheme("tag")
         item = QStandardItem(icon, short_name)
         item.setToolTip(name)
+        item.setData(name)
         c_item = QStandardItem(str(count))
         c_item.setTextAlignment(Qt.AlignRight)
         return item, c_item
+
+    def get_current_conditions(self):
+        result = []
+        for index in self.lib_tree.selectedIndexes():
+            if index.column() > 0:
+                continue
+            item = self.model.itemFromIndex(index)
+            logger.debug("Selected item: %r", item)
+            tag = item.data()
+            result.append(TagQuery(tag))
+        return result
 
     @Slot()
     def resize_columns(self, index=None):

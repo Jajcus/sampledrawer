@@ -7,6 +7,7 @@ from PySide2.QtCore import QFile
 
 from .filebrowser import FileBrowser
 from .librarytree import LibraryTree
+from .libraryitems import LibraryItems
 from .sampleplayer import SamplePlayer
 from .sampleanalyzer import AsyncSampleAnalyzer, FileKey
 from .metadatabrowser import MetadataBrowser
@@ -35,6 +36,7 @@ class MainWindow:
         self.window = loader.load(ui_file)
         self.file_browser = FileBrowser(app, self.window)
         self.lib_tree = LibraryTree(app, self.window)
+        self.lib_items = LibraryItems(app, self.window, self.lib_tree)
         self.sample_player = SamplePlayer(self.window)
         self.sample_analyzer = AsyncSampleAnalyzer()
         self.metadata_browser = MetadataBrowser(self.window.metadata_view)

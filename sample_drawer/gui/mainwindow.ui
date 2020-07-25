@@ -46,7 +46,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QTableView" name="library_items"/>
+         <widget class="QTreeView" name="lib_items"/>
         </item>
        </layout>
       </widget>
@@ -60,7 +60,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QListView" name="scratchpad_view"/>
+         <widget class="QTreeView" name="scratchpad_items"/>
         </item>
        </layout>
       </widget>
@@ -74,7 +74,7 @@
      <x>0</x>
      <y>0</y>
      <width>897</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
