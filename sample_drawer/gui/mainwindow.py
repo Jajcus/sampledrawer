@@ -2,13 +2,14 @@
 import logging
 import os
 
+from PySide2.QtCore import QFile, Slot
 from PySide2.QtUiTools import QUiLoader
-from PySide2.QtCore import QFile
 
 from .filebrowser import FileBrowser
 from .librarytree import LibraryTree
 from .libraryitems import LibraryItems
 from .sampleplayer import SamplePlayer
+from ..samplemetadata import SampleMetadata
 from .sampleanalyzer import AsyncSampleAnalyzer, FileKey
 from .metadatabrowser import MetadataBrowser
 from .waveform import WaveformWidget, WaveformCursorWidget
@@ -42,11 +43,13 @@ class MainWindow:
         self.metadata_browser = MetadataBrowser(self.window.metadata_view)
         self.file_browser.file_selected.connect(self.sample_player.file_selected)
         self.file_browser.file_selected.connect(self.file_selected)
+        self.lib_items.item_selected.connect(self.item_selected)
         self.current_file = None
 
     def show(self):
         self.window.show()
 
+    @Slot(SampleMetadata)
     def file_selected(self, path):
         path = FileKey(path)
         self.current_file = path
@@ -55,6 +58,22 @@ class MainWindow:
         self.window.waveform.set_cursor_position(-1)
         self.sample_analyzer.request_waveform(path, self.waveform_received)
         self.sample_analyzer.request_file_metadata(path, self.metadata_received)
+
+    @Slot()
+    def item_selected(self, metadata):
+        logger.debug("library item selected: %r", metadata)
+        if metadata:
+            path = self.app.library.get_library_object_path(metadata)
+        else:
+            path = None
+        self.current_file = path
+        self.window.waveform.set_waveform(None)
+        self.window.waveform.set_duration(0)
+        self.window.waveform.set_cursor_position(-1)
+        if path:
+            self.sample_analyzer.request_waveform(path, self.waveform_received)
+        self.metadata_browser.set_metadata(metadata)
+        self.sample_player.file_selected(path)
 
     def waveform_received(self, path, waveform):
         if path == self.current_file:

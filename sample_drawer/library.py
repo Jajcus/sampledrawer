@@ -89,6 +89,8 @@ class Library:
         self.db = db
 
     def get_library_object_path(self, metadata):
+        if metadata.path:
+            return metadata.path
         md5 = metadata.md5
         ext = metadata.format
         if ext:

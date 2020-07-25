@@ -13,6 +13,7 @@ logger = logging.getLogger("librarytree")
 ITEM_LIMIT = 100
 
 class LibraryItems(QObject):
+    item_selected = Signal(object)
     def __init__(self, app, window, lib_tree):
         QObject.__init__(self)
         self.app = app
@@ -29,11 +30,14 @@ class LibraryItems(QObject):
         self.view.setModel(self.model)
         self.view.sortByColumn(0, Qt.AscendingOrder)
         self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        selection_model = self.view.selectionModel()
+        selection_model.selectionChanged.connect(self.selection_changed)
         tree_selection_model = window.lib_tree.selectionModel()
         tree_selection_model.selectionChanged.connect(self.tree_selection_changed)
 
     def reload(self):
         self.model.clear()
+        self.item_selected.emit(None)
         icon = QIcon.fromTheme("audio-x-generic")
         for item in self.items:
             s_item = QStandardItem(icon, item.name)
@@ -42,6 +46,18 @@ class LibraryItems(QObject):
         if self.items_incomplete:
             s_item = QStandardItem("…and more")
             self.model.appendRow([s_item])
+
+    @Slot(QItemSelection)
+    def selection_changed(self, selection):
+        logger.debug("selection changed")
+        indexes = selection.indexes()
+        if indexes:
+            index = selection.indexes()[0]
+            s_item = self.model.itemFromIndex(index)
+            metadata = s_item.data()
+        else:
+            metadata = None
+        self.item_selected.emit(metadata)
 
     @Slot(QItemSelection)
     def tree_selection_changed(self, selection):
