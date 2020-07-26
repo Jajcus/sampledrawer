@@ -7,7 +7,7 @@ from PySide2.QtUiTools import QUiLoader
 
 from .file_browser import FileBrowser
 from .lib_tree import LibraryTree
-from .libraryitems import LibraryItems
+from .lib_items import LibraryItems
 from .sampleplayer import SamplePlayer
 from ..metadata import Metadata
 from .file_analyzer import AsyncFileAnalyzer, FileKey

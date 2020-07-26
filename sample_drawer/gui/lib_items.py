@@ -8,7 +8,7 @@ from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem
 
 from ..search import SearchQuery
 
-logger = logging.getLogger("librarytree")
+logger = logging.getLogger("lib_items")
 
 ITEM_LIMIT = 100
 
