@@ -1,17 +1,32 @@
 
 import logging
 import os
+import typing
 
-from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QDir
+from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QDir, QFileInfo
+from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 from PySide2.QtWidgets import QFileSystemModel, QAbstractItemView
+from PySide2.QtWidgets import QFileIconProvider
 
 logger = logging.getLogger("file_browser")
 
+KNOWN_EXTENSIONS = ["wav", "flac", "ogg", "oga", "aif", "aiff", "au"]
+
 NAME_FILTERS = [
-        ("Sound Files", ["*.wav", "*.ogg", "*.oga", "*.mp3"]),
+        ("Sound Files", ["*." + ext for ext in KNOWN_EXTENSIONS]),
         ("All Files", ["*"]),
         ]
+
+class FileIconProvider(QFileIconProvider):
+    def __init__(self):
+        self._audio_icon = QIcon.fromTheme("audio-x-generic")
+        super().__init__()
+    def icon(self, info: QFileInfo):
+        if info.suffix() in KNOWN_EXTENSIONS:
+            return self._audio_icon
+        else:
+            return super().icon(info)
 
 class FileBrowser(QObject):
     file_selected = Signal(str)
@@ -22,12 +37,14 @@ class FileBrowser(QObject):
         self.show_hidden_chk = window.show_hidden
         self.name_filter_combo = window.name_filter
         self.model = QFileSystemModel(self.view)
+        self.icon_provider = FileIconProvider()
         if app.args.root:
             self.model.setRootPath(app.args.root)
             self.current_path = app.args.root
         else:
             self.model.setRootPath("")
             self.current_path = os.path.realpath(os.curdir)
+        self.model.setIconProvider(self.icon_provider)
         self.view.setModel(self.model)
         self.view.sortByColumn(0, Qt.AscendingOrder)
         self.view.setSortingEnabled(True)
