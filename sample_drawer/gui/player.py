@@ -2,6 +2,7 @@
 import logging
 
 from PySide2.QtCore import Slot, QByteArray, QDataStream, QTimer
+from PySide2.QtGui import QIcon
 from PySide2.QtMultimedia import QAudioDeviceInfo, QAudioDecoder, QAudioFormat, QAudioOutput, QAudio
 
 from cffi import FFI
@@ -12,14 +13,17 @@ logger = logging.getLogger("player")
 class Player:
     def __init__(self, window):
         self.window = window
-        self.window.play_btn.clicked.connect(self.play_clicked)
-        self.duration = None
+
+        self.play_icon = QIcon.fromTheme("media-playback-start")
+        self.pause_icon = QIcon.fromTheme("media-playback-pause")
+
         device = QAudioDeviceInfo.defaultOutputDevice()
         playback_format = device.preferredFormat()
         self.decoder = QAudioDecoder()
         self.decoder.setAudioFormat(playback_format)
         self.output = QAudioOutput(device, playback_format)
 
+        self.duration = None
         self.bytes_written = 0
         self.last_frame = b""
         self.starting = False
@@ -27,6 +31,9 @@ class Player:
         self.current_file = None
         self.current_buffer = None
         self.current_buffer_pos = 0
+
+        self.window.play_btn.clicked.connect(self.play_pause_clicked)
+        self.window.stop_btn.clicked.connect(self.stop_clicked)
 
         self.output.stateChanged.connect(self.output_state_changed)
         self.output.notify.connect(self.tick)
@@ -139,6 +146,9 @@ class Player:
         self.current_buffer = None
         self.output_dev = None
         self.window.waveform.set_cursor_position(0)
+        self.window.stop_btn.setEnabled(True)
+        self.window.play_btn.setIcon(self.play_icon)
+        self.window.play_btn.setText("Play")
         if self.current_file:
             self.decoder.setSourceFilename(self.current_file)
             self.window.play_btn.setEnabled(True)
@@ -164,18 +174,44 @@ class Player:
         self.rewind()
 
     @Slot()
-    def play_clicked(self):
-        self.starting = True
-        try:
-            self.bytes_written = 0
-            self.decoder.start()
-            self.output_dev = self.output.start()
-            fmt = self.output.format()
-            tick_interval = fmt.durationForBytes(self.output.periodSize()) / 1000
-            logger.debug("tick interval: %i", tick_interval)
-            self.output.setNotifyInterval(tick_interval)
+    def play_pause_clicked(self):
+        logger.debug("Play/Pause clicked")
+        if self.output.state() == QAudio.State.ActiveState:
+            logger.debug("pausing")
+            self.window.play_btn.setIcon(self.play_icon)
+            self.window.play_btn.setText("Play")
+            self.output.suspend()
+        elif self.output.state() == QAudio.State.SuspendedState:
+            logger.debug("resuming")
+            self.starting = True
+            try:
+                self.output.resume()
+            finally:
+                self.starting = False
+            self.window.play_btn.setIcon(self.pause_icon)
+            self.window.play_btn.setText("Pause")
             self.push_data()
-        finally:
-            self.starting = False
+        elif not self.output_dev:
+            logger.debug("starting")
+            self.starting = True
+            try:
+                self.bytes_written = 0
+                self.decoder.start()
+                self.output_dev = self.output.start()
+                fmt = self.output.format()
+                tick_interval = fmt.durationForBytes(self.output.periodSize()) / 1000
+                logger.debug("tick interval: %i", tick_interval)
+                self.output.setNotifyInterval(tick_interval)
+                self.push_data()
+                self.window.play_btn.setIcon(self.pause_icon)
+                self.window.play_btn.setText("Pause")
+                self.window.stop_btn.setEnabled(True)
+            finally:
+                self.starting = False
+        else:
+            logger.debug("Ignoring Play/Pause in unexpected state")
 
 
+    @Slot()
+    def stop_clicked(self):
+        self.rewind()
