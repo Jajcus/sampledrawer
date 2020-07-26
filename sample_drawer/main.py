@@ -10,7 +10,7 @@ import appdirs
 from PySide2.QtWidgets import QApplication
 
 from .gui.main_window import MainWindow
-from .gui.signalhandler import SignalHandler
+from .gui.signal_handler import SignalHandler
 from .library import Library, LibraryConflictError
 from .file_analyzer import FileAnalyzer
 
