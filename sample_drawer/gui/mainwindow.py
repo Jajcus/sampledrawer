@@ -10,7 +10,7 @@ from .librarytree import LibraryTree
 from .libraryitems import LibraryItems
 from .sampleplayer import SamplePlayer
 from ..samplemetadata import SampleMetadata
-from .sampleanalyzer import AsyncSampleAnalyzer, FileKey
+from .file_analyzer import AsyncFileAnalyzer, FileKey
 from .metadatabrowser import MetadataBrowser
 from .waveform import WaveformWidget, WaveformCursorWidget
 
@@ -39,7 +39,7 @@ class MainWindow:
         self.lib_tree = LibraryTree(app, self.window)
         self.lib_items = LibraryItems(app, self.window, self.lib_tree)
         self.sample_player = SamplePlayer(self.window)
-        self.sample_analyzer = AsyncSampleAnalyzer()
+        self.file_analyzer = AsyncFileAnalyzer()
         self.metadata_browser = MetadataBrowser(self.window.metadata_view)
         self.file_browser.file_selected.connect(self.sample_player.file_selected)
         self.file_browser.file_selected.connect(self.file_selected)
@@ -56,8 +56,8 @@ class MainWindow:
         self.window.waveform.set_waveform(None)
         self.window.waveform.set_duration(0)
         self.window.waveform.set_cursor_position(-1)
-        self.sample_analyzer.request_waveform(path, self.waveform_received)
-        self.sample_analyzer.request_file_metadata(path, self.metadata_received)
+        self.file_analyzer.request_waveform(path, self.waveform_received)
+        self.file_analyzer.request_file_metadata(path, self.metadata_received)
 
     @Slot()
     def item_selected(self, metadata):
@@ -71,7 +71,7 @@ class MainWindow:
         self.window.waveform.set_duration(0)
         self.window.waveform.set_cursor_position(-1)
         if path:
-            self.sample_analyzer.request_waveform(path, self.waveform_received)
+            self.file_analyzer.request_waveform(path, self.waveform_received)
         self.metadata_browser.set_metadata(metadata)
         self.sample_player.file_selected(path)
 

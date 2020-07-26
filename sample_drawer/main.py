@@ -12,7 +12,7 @@ from PySide2.QtWidgets import QApplication
 from .gui.mainwindow import MainWindow
 from .gui.signalhandler import SignalHandler
 from .library import Library, LibraryConflictError
-from .sampleanalyzer import SampleAnalyzer
+from .file_analyzer import FileAnalyzer
 
 APP_NAME = "sampledrawer"
 APP_AUTHOR = "Jajcus"
@@ -43,7 +43,7 @@ class Application:
         logging.debug("qt_argv: %r", self.args.qt_argv)
         self.qapp = QApplication(self.args.qt_argv)
 
-        self.analyzer = SampleAnalyzer()
+        self.analyzer = FileAnalyzer()
         self.library = Library(self)
 
     def parse_args(self):

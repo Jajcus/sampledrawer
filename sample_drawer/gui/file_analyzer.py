@@ -7,16 +7,16 @@ from functools import partial
 from PySide2.QtCore import QObject, Slot, Signal, QRunnable, QThreadPool
 
 from ..lrucache import LRUCache
-from ..sampleanalyzer import SampleAnalyzer, FileKey
+from ..file_analyzer import FileAnalyzer, FileKey
 from ..samplemetadata import SampleMetadata
 
-logger = logging.getLogger("gui.sampleanalyzer")
+logger = logging.getLogger("gui.file_analyzer")
 
-class SampleAnalyzerWorker(QRunnable, SampleAnalyzer):
+class FileAnalyzerWorker(QRunnable, FileAnalyzer):
 
     def __init__(self, path):
         QRunnable.__init__(self)
-        SampleAnalyzer.__init__(self)
+        FileAnalyzer.__init__(self)
         self.path = path
         self.signals = self.Signals()
 
@@ -38,7 +38,7 @@ class SampleAnalyzerWorker(QRunnable, SampleAnalyzer):
         finished = Signal(dict)
         error = Signal(str)
 
-class AsyncSampleAnalyzer(QObject):
+class AsyncFileAnalyzer(QObject):
     def __init__(self):
         QObject.__init__(self)
         self.threadpool = QThreadPool()
@@ -82,7 +82,7 @@ class AsyncSampleAnalyzer(QObject):
             logger.debug("Already requested, adding to the waiting list")
             waiting_list.append(callback)
         else:
-            worker = SampleAnalyzerWorker(file_key)
+            worker = FileAnalyzerWorker(file_key)
             self.threadpool.start(worker)
             our_callback = partial(self._file_info_received, file_key)
             self._waiting_for_info[file_key] = [callback]

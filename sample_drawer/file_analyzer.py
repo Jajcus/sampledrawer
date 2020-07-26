@@ -14,7 +14,7 @@ from .samplemetadata import SampleMetadata
 
 READ_BLOCK_SIZE = 16*1024*1024
 
-logger = logging.getLogger("sampleanalyzer")
+logger = logging.getLogger("file_analyzer")
 
 class FileKey:
     """For reliably using filenames as keys in a cache."""
@@ -48,7 +48,7 @@ class FileKey:
                 and self.stat.st_size == other.stat.st_size
                 and self.stat.st_mtime == other.stat.st_mtime)
 
-class SampleAnalyzer:
+class FileAnalyzer:
     def __init__(self):
         pass
 
@@ -97,7 +97,7 @@ class SampleAnalyzer:
         file_info = self.get_file_info(path)
         return SampleMetadata.from_file_info(file_info)
 
-class CachedSampleAnalyzer(SampleAnalyzer):
+class CachedFileAnalyzer(FileAnalyzer):
     def __init__(self):
         self._cache = LRUCache(maxsize=10)
 
