@@ -19,11 +19,16 @@ class Player:
         self.decoder = QAudioDecoder()
         self.decoder.setAudioFormat(playback_format)
         self.output = QAudioOutput(device, playback_format)
+
+        self.starting = False
         self.output_dev = None
+        self.current_file = None
         self.current_buffer = None
         self.current_buffer_pos = 0
 
         self.output.stateChanged.connect(self.output_state_changed)
+        self.output.notify.connect(self.tick)
+
         self.decoder.error.connect(self.decoder_error)
         self.decoder.finished.connect(self.decoder_finished)
         self.decoder.stateChanged.connect(self.decoder_state_changed)
@@ -40,6 +45,10 @@ class Player:
     @Slot()
     def decoder_finished(self):
         logger.info("Decoder finished")
+        if self.output_dev:
+            self.playing = False
+            self.output_dev.close()
+            self.output_dev = None
 
     @Slot(int)
     def decoder_pos_changed(self, pos):
@@ -59,7 +68,11 @@ class Player:
     @Slot(QAudio.State)
     def output_state_changed(self, state):
         logger.debug("Output state changed to: %r", state)
-        self.push_data()
+        if state == QAudio.State.IdleState and not self.starting:
+            logger.debug("playback finished")
+            self.rewind()
+        else:
+            self.push_data()
 
     @Slot()
     def tick(self):
@@ -68,6 +81,9 @@ class Player:
 
     def push_data(self):
         logger.debug("push_data() start")
+        if not self.output_dev:
+            logger.debug("no output device")
+            return
         while True:
             logger.debug("push_data...")
             buf = self.current_buffer
@@ -99,6 +115,19 @@ class Player:
             if bytes_written < to_write:
                 break
 
+    def rewind(self):
+        self.output.stop()
+        self.output.reset()
+        self.current_buffer = None
+        self.output_dev = None
+        self.window.waveform.set_cursor_position(0)
+        if self.current_file:
+            self.decoder.setSourceFilename(self.current_file)
+            self.window.play_btn.setEnabled(True)
+        else:
+            self.decoder.stop()
+            self.window.play_btn.setEnabled(False)
+
     @Slot(int)
     def duration_changed(self, duration):
         logger.info("Duration: %i", duration)
@@ -113,19 +142,21 @@ class Player:
 
     @Slot(str)
     def file_selected(self, path):
-        if path:
-            self.decoder.setSourceFilename(path)
-            self.window.play_btn.setEnabled(True)
+        self.current_file = path
+        self.rewind()
 
     @Slot()
     def play_clicked(self):
-        self.decoder.start()
-        self.output_dev = self.output.start()
-        fmt = self.output.format()
-        tick_interval = fmt.durationForBytes(self.output.periodSize()) / 1000
-        logger.debug("tick interval: %i", tick_interval)
-        self.output.setNotifyInterval(tick_interval)
-        self.output.notify.connect(self.tick)
-        self.push_data()
+        self.starting = True
+        try:
+            self.decoder.start()
+            self.output_dev = self.output.start()
+            fmt = self.output.format()
+            tick_interval = fmt.durationForBytes(self.output.periodSize()) / 1000
+            logger.debug("tick interval: %i", tick_interval)
+            self.output.setNotifyInterval(tick_interval)
+            self.push_data()
+        finally:
+            self.starting = False
 
 
