@@ -20,6 +20,8 @@ class Player:
         self.decoder.setAudioFormat(playback_format)
         self.output = QAudioOutput(device, playback_format)
 
+        self.bytes_written = 0
+        self.last_frame = b""
         self.starting = False
         self.output_dev = None
         self.current_file = None
@@ -47,6 +49,17 @@ class Player:
         logger.info("Decoder finished")
         if self.output_dev:
             self.playing = False
+            buf_size = self.output.bufferSize()
+            reminder = self.bytes_written % buf_size
+            if reminder and self.last_frame:
+                logger.debug("only %r bytes written to last %r bytes buffer",
+                             reminder, buf_size)
+                # make sure multiple of the buffer size has been written
+                frames_missing = (buf_size - reminder) // len(self.last_frame)
+                padding = self.last_frame * frames_missing
+                logger.debug("Padding with %r frames (%r bytes)",
+                             frames_missing, len(padding))
+                self.output_dev.write(padding)
             self.output_dev.close()
             self.output_dev = None
 
@@ -71,8 +84,7 @@ class Player:
         if state == QAudio.State.IdleState and not self.starting:
             logger.debug("playback finished")
             self.rewind()
-        else:
-            self.push_data()
+        # do not call push_data() here, as this is called from push_data()
 
     @Slot()
     def tick(self):
@@ -84,6 +96,7 @@ class Player:
         if not self.output_dev:
             logger.debug("no output device")
             return
+        frame_size = self.output.format().bytesPerFrame()
         while True:
             logger.debug("push_data...")
             buf = self.current_buffer
@@ -107,7 +120,11 @@ class Player:
             to_write = len(data_bytes)
             data_arr = QByteArray.fromRawData(data_bytes)
             bytes_written = self.output_dev.write(data_arr)
+            if bytes_written > frame_size:
+                self.last_frame = data_arr[bytes_written - frame_size:bytes_written].data()
+                logger.debug("Last frame: %r", self.last_frame)
             self.current_buffer_pos += bytes_written
+            self.bytes_written = bytes_written
             logger.debug("%i of %i bytes written, pos: %i",
                          bytes_written, to_write, self.current_buffer_pos)
             if self.current_buffer_pos >= length:
@@ -118,6 +135,7 @@ class Player:
     def rewind(self):
         self.output.stop()
         self.output.reset()
+        self.bytes_written = 0
         self.current_buffer = None
         self.output_dev = None
         self.window.waveform.set_cursor_position(0)
@@ -149,6 +167,7 @@ class Player:
     def play_clicked(self):
         self.starting = True
         try:
+            self.bytes_written = 0
             self.decoder.start()
             self.output_dev = self.output.start()
             fmt = self.output.format()
