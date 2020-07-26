@@ -6,7 +6,7 @@ from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QD
 from PySide2.QtWidgets import QApplication
 from PySide2.QtWidgets import QFileSystemModel, QAbstractItemView
 
-logger = logging.getLogger("filebrowser")
+logger = logging.getLogger("file_browser")
 
 NAME_FILTERS = [
         ("Sound Files", ["*.wav", "*.ogg", "*.oga", "*.mp3"]),
