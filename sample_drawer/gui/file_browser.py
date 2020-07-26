@@ -18,32 +18,32 @@ class FileBrowser(QObject):
     def __init__(self, app, window):
         QObject.__init__(self)
         self.app = app
-        self.file_tree = window.file_tree
+        self.view = window.file_tree
         self.show_hidden_chk = window.show_hidden
         self.name_filter_combo = window.name_filter
-        self.model = QFileSystemModel(self.file_tree)
+        self.model = QFileSystemModel(self.view)
         if app.args.root:
             self.model.setRootPath(app.args.root)
             self.current_path = app.args.root
         else:
             self.model.setRootPath("")
             self.current_path = os.path.realpath(os.curdir)
-        self.file_tree.setModel(self.model)
-        self.file_tree.sortByColumn(0, Qt.AscendingOrder)
-        self.file_tree.setSortingEnabled(True)
+        self.view.setModel(self.model)
+        self.view.sortByColumn(0, Qt.AscendingOrder)
+        self.view.setSortingEnabled(True)
         index = self.model.index(self.current_path)
         if app.args.root:
-            self.file_tree.setRootIndex(index)
-        self.file_tree.setExpanded(index, True)
-        self.file_tree.setCurrentIndex(index)
-        self.file_tree.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
+            self.view.setRootIndex(index)
+        self.view.setExpanded(index, True)
+        self.view.setCurrentIndex(index)
+        self.view.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
         self.add_name_filters()
         self.apply_show_hidden()
         self.apply_name_filters()
         self.model.setNameFilterDisables(False)
         self.model.directoryLoaded.connect(self.directory_loaded)
         self.model.dataChanged.connect(self.data_changed)
-        selection_model = self.file_tree.selectionModel()
+        selection_model = self.view.selectionModel()
         selection_model.selectionChanged.connect(self.selection_changed)
         self.show_hidden_chk.stateChanged.connect(self.apply_show_hidden)
         self.name_filter_combo.currentIndexChanged.connect(self.apply_name_filters)
@@ -84,8 +84,8 @@ class FileBrowser(QObject):
     @Slot()
     def scroll_to_current(self):
         index = self.model.index(self.current_path)
-        self.file_tree.scrollTo(index)
-        self.file_tree.resizeColumnToContents(0)
+        self.view.scrollTo(index)
+        self.view.resizeColumnToContents(0)
 
     @Slot(QItemSelection)
     def selection_changed(self, selection):

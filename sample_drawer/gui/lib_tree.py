@@ -16,17 +16,17 @@ class LibraryTree(QObject):
         QObject.__init__(self)
         self.app = app
         self.library = app.library
-        self.lib_tree = window.lib_tree
+        self.view = window.lib_tree
         self.items = {}
         self.model = QStandardItemModel()
         self.model.setColumnCount(2)
-        self.lib_tree.setHeaderHidden(True)
-        self.lib_tree.setModel(self.model)
-        self.lib_tree.sortByColumn(0, Qt.AscendingOrder)
-        self.lib_tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.lib_tree.expanded.connect(self.resize_columns)
-        self.lib_tree.collapsed.connect(self.resize_columns)
-        selection_model = self.lib_tree.selectionModel()
+        self.view.setHeaderHidden(True)
+        self.view.setModel(self.model)
+        self.view.sortByColumn(0, Qt.AscendingOrder)
+        self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.view.expanded.connect(self.resize_columns)
+        self.view.collapsed.connect(self.resize_columns)
+        selection_model = self.view.selectionModel()
         selection_model.selectionChanged.connect(self.selection_changed)
         self.reload()
 
@@ -66,7 +66,7 @@ class LibraryTree(QObject):
 
     def get_current_conditions(self):
         result = []
-        for index in self.lib_tree.selectedIndexes():
+        for index in self.view.selectedIndexes():
             if index.column() > 0:
                 continue
             item = self.model.itemFromIndex(index)
@@ -77,8 +77,8 @@ class LibraryTree(QObject):
 
     @Slot()
     def resize_columns(self, index=None):
-        self.lib_tree.resizeColumnToContents(0)
-        self.lib_tree.resizeColumnToContents(1)
+        self.view.resizeColumnToContents(0)
+        self.view.resizeColumnToContents(1)
 
     @Slot(QItemSelection)
     def selection_changed(self, selection):
