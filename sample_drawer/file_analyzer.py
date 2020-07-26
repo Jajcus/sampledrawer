@@ -10,7 +10,7 @@ from soundfile import SoundFile
 
 from .dsp import compute_peak_level, compute_waveform
 from .lrucache import LRUCache
-from .samplemetadata import SampleMetadata
+from .metadata import Metadata
 
 READ_BLOCK_SIZE = 16*1024*1024
 
@@ -95,7 +95,7 @@ class FileAnalyzer:
 
     def get_file_metadata(self, path):
         file_info = self.get_file_info(path)
-        return SampleMetadata.from_file_info(file_info)
+        return Metadata.from_file_info(file_info)
 
 class CachedFileAnalyzer(FileAnalyzer):
     def __init__(self):

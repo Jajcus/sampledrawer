@@ -30,9 +30,9 @@ VALID_TAG_RE = re.compile(r"^((/[\w-]+)*/)?[\w-]+$")
 
 INVALID_TAG_CHAR = re.compile(r"[^\w/-]")
 
-logger = logging.getLogger("samplemetadata")
+logger = logging.getLogger("metadata")
 
-class SampleMetadata:
+class Metadata:
     def __init__(self, data=None, tags=None):
         object.__setattr__(self, "_data", {})
         object.__setattr__(self, "_tags", set())
@@ -57,7 +57,7 @@ class SampleMetadata:
                 else:
                     self._tags.add(tag)
     def __repr__(self):
-        return "SampleMetadata({!r}, {!r})".format(self._data, self._tags)
+        return "Metadata({!r}, {!r})".format(self._data, self._tags)
     @classmethod
     def from_file_info(cls, file_info):
         data = {"_" + k: v for (k, v) in file_info.items() if k in FIXED_METADATA_D}

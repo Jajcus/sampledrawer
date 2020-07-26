@@ -5,7 +5,7 @@ import shlex
 
 from collections import defaultdict
 
-from .samplemetadata import VALID_TAG_RE, VALID_KEY_RE, FIXED_METADATA_D, FIXED_METADATA_KEYS
+from .metadata import VALID_TAG_RE, VALID_KEY_RE, FIXED_METADATA_D, FIXED_METADATA_KEYS
 
 class SQLQuery:
     def __init__(self, tables, where_clause, parameters):

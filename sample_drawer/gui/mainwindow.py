@@ -9,7 +9,7 @@ from .filebrowser import FileBrowser
 from .librarytree import LibraryTree
 from .libraryitems import LibraryItems
 from .sampleplayer import SamplePlayer
-from ..samplemetadata import SampleMetadata
+from ..metadata import Metadata
 from .file_analyzer import AsyncFileAnalyzer, FileKey
 from .metadatabrowser import MetadataBrowser
 from .waveform import WaveformWidget, WaveformCursorWidget
@@ -49,7 +49,7 @@ class MainWindow:
     def show(self):
         self.window.show()
 
-    @Slot(SampleMetadata)
+    @Slot(Metadata)
     def file_selected(self, path):
         path = FileKey(path)
         self.current_file = path

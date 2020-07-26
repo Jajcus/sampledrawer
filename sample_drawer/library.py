@@ -6,7 +6,7 @@ import sqlite3
 
 from collections import defaultdict
 
-from .samplemetadata import FIXED_METADATA_D, FIXED_METADATA_KEYS, SampleMetadata
+from .metadata import FIXED_METADATA_D, FIXED_METADATA_KEYS, Metadata
 
 logger = logging.getLogger("library")
 
@@ -210,4 +210,4 @@ class Library:
                 # leave only leaf tags
                 continue
             tags.append(tag)
-        return SampleMetadata(data, tags)
+        return Metadata(data, tags)

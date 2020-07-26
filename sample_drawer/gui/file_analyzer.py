@@ -8,7 +8,7 @@ from PySide2.QtCore import QObject, Slot, Signal, QRunnable, QThreadPool
 
 from ..lrucache import LRUCache
 from ..file_analyzer import FileAnalyzer, FileKey
-from ..samplemetadata import SampleMetadata
+from ..metadata import Metadata
 
 logger = logging.getLogger("gui.file_analyzer")
 
@@ -67,11 +67,11 @@ class AsyncFileAnalyzer(QObject):
             file_key = FileKey(path)
         file_info = self._cache.get(file_key)
         if file_info is not None:
-            metadata = SampleMetadata.from_file_info(file_info)
+            metadata = Metadata.from_file_info(file_info)
             callback(file_key, metadata)
             return
         def our_callback(path, file_info):
-            metadata = SampleMetadata.from_file_info(file_info)
+            metadata = Metadata.from_file_info(file_info)
             callback(path, metadata)
         self._request_info(path, callback=our_callback)
 
@@ -103,6 +103,6 @@ class AsyncFileAnalyzer(QObject):
     def get_file_metadata(self, path):
         file_info = self.get_file_info(path)
         if file_info is not None:
-            return SampleMetadata.from_file_info(file_info)
+            return Metadata.from_file_info(file_info)
         else:
             return None
