@@ -7,9 +7,9 @@ from PySide2.QtMultimedia import QAudioDeviceInfo, QAudioDecoder, QAudioFormat, 
 from cffi import FFI
 
 ffi = FFI()
-logger = logging.getLogger("sampleplayer")
+logger = logging.getLogger("player")
 
-class SamplePlayer:
+class Player:
     def __init__(self, window):
         self.window = window
         self.window.play_btn.clicked.connect(self.play_clicked)

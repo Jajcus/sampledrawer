@@ -8,7 +8,7 @@ from PySide2.QtUiTools import QUiLoader
 from .file_browser import FileBrowser
 from .lib_tree import LibraryTree
 from .lib_items import LibraryItems
-from .sampleplayer import SamplePlayer
+from .player import Player
 from ..metadata import Metadata
 from .file_analyzer import AsyncFileAnalyzer, FileKey
 from .metadata_browser import MetadataBrowser
@@ -38,7 +38,7 @@ class MainWindow:
         self.file_browser = FileBrowser(app, self.window)
         self.lib_tree = LibraryTree(app, self.window)
         self.lib_items = LibraryItems(app, self.window, self.lib_tree)
-        self.sample_player = SamplePlayer(self.window)
+        self.sample_player = Player(self.window)
         self.file_analyzer = AsyncFileAnalyzer()
         self.metadata_browser = MetadataBrowser(self.window.metadata_view)
         self.file_browser.file_selected.connect(self.sample_player.file_selected)
