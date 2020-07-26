@@ -11,7 +11,7 @@ from .lib_items import LibraryItems
 from .sampleplayer import SamplePlayer
 from ..metadata import Metadata
 from .file_analyzer import AsyncFileAnalyzer, FileKey
-from .metadatabrowser import MetadataBrowser
+from .metadata_browser import MetadataBrowser
 from .waveform import WaveformWidget, WaveformCursorWidget
 
 from . import __path__ as PKG_PATH

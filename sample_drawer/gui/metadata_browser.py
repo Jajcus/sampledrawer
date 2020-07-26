@@ -6,7 +6,7 @@ from PySide2.QtCore import Slot, Signal, Qt, QObject
 from PySide2.QtCore import QAbstractItemModel, QModelIndex
 from PySide2.QtGui import QStandardItemModel, QStandardItem
 
-logger = logging.getLogger("metadatabrowser")
+logger = logging.getLogger("metadata_browser")
 
 class MetadataBrowser(QObject):
     def __init__(self, metadata_view):
