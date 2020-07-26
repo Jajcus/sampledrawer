@@ -20,6 +20,12 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <layout class="QHBoxLayout" name="horizontalLayout_3">
     <item>
      <widget class="QSplitter" name="splitter">
@@ -46,7 +52,14 @@
          </widget>
         </item>
         <item>
-         <widget class="QTreeView" name="lib_items"/>
+         <widget class="QTreeView" name="lib_items">
+          <property name="minimumSize">
+           <size>
+            <width>500</width>
+            <height>0</height>
+           </size>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -60,7 +73,14 @@
          </widget>
         </item>
         <item>
-         <widget class="QTreeView" name="scratchpad_items"/>
+         <widget class="QTreeView" name="scratchpad_items">
+          <property name="minimumSize">
+           <size>
+            <width>500</width>
+            <height>0</height>
+           </size>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -195,6 +215,12 @@
     <layout class="QVBoxLayout" name="verticalLayout_2">
      <item>
       <widget class="QTreeView" name="lib_tree">
+       <property name="minimumSize">
+        <size>
+         <width>300</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="whatsThis">
         <string>Tags in the library, availabe for item filtering</string>
        </property>
@@ -213,7 +239,14 @@
    <widget class="QWidget" name="dockWidgetContents_4">
     <layout class="QVBoxLayout" name="verticalLayout_3">
      <item>
-      <widget class="QTreeView" name="metadata_view"/>
+      <widget class="QTreeView" name="metadata_view">
+       <property name="minimumSize">
+        <size>
+         <width>300</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
