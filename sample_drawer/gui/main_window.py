@@ -16,9 +16,9 @@ from .waveform import WaveformWidget, WaveformCursorWidget
 
 from . import __path__ as PKG_PATH
 
-logger = logging.getLogger("mainwindow")
+logger = logging.getLogger("main_window")
 
-UI_FILENAME = os.path.join(PKG_PATH[0], "mainwindow.ui")
+UI_FILENAME = os.path.join(PKG_PATH[0], "main_window.ui")
 
 class UiLoader(QUiLoader):
     def createWidget(self, className, parent=None, name=""):
