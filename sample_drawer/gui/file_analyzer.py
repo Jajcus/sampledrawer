@@ -6,7 +6,7 @@ from functools import partial
 
 from PySide2.QtCore import QObject, Slot, Signal, QRunnable, QThreadPool
 
-from ..lrucache import LRUCache
+from ..lru_cache import LRUCache
 from ..file_analyzer import FileAnalyzer, FileKey
 from ..metadata import Metadata
 

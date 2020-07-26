@@ -9,7 +9,7 @@ from functools import cached_property
 from soundfile import SoundFile
 
 from .dsp import compute_peak_level, compute_waveform
-from .lrucache import LRUCache
+from .lru_cache import LRUCache
 from .metadata import Metadata
 
 READ_BLOCK_SIZE = 16*1024*1024
