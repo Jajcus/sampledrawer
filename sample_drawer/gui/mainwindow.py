@@ -6,7 +6,7 @@ from PySide2.QtCore import QFile, Slot
 from PySide2.QtUiTools import QUiLoader
 
 from .file_browser import FileBrowser
-from .librarytree import LibraryTree
+from .lib_tree import LibraryTree
 from .libraryitems import LibraryItems
 from .sampleplayer import SamplePlayer
 from ..metadata import Metadata

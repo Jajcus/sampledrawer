@@ -9,7 +9,7 @@ from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem
 
 from ..search import TagQuery
 
-logger = logging.getLogger("librarytree")
+logger = logging.getLogger("lib_tree")
 
 class LibraryTree(QObject):
     def __init__(self, app, window):
