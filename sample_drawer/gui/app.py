@@ -30,10 +30,11 @@ class GUIApplication:
                 QResource.registerResource(path)
         QIcon.setThemeSearchPaths(QIcon.themeSearchPaths() + ["/home/jajcus/git/sampledrawer/icons"])
         logger.debug("Icon search path: %r", QIcon.themeSearchPaths())
+        QIcon.setFallbackSearchPaths([":icons/"] + QIcon.fallbackSearchPaths())
         logger.debug("Icon fallback path: %r", QIcon.fallbackSearchPaths())
         logger.debug("Theme name %r", QIcon.themeName())
         logger.debug("Fallback theme name: %r", QIcon.fallbackThemeName())
-        self.qapp.setWindowIcon(QIcon(":/icons/48x48/sampledrawer.png"))
+        self.qapp.setWindowIcon(QIcon(":icons/sampledrawer.svg"))
     def start(self):
         self.main_window = MainWindow(self)
         self.main_window.show()

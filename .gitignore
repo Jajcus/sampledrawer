@@ -4,4 +4,4 @@ __pycache__
 *.pyc
 *.rcc
 test.wav
-icons/48x48
+icons/*.png

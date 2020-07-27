@@ -8,13 +8,12 @@ ICONS = \
 	sampledrawer \
 	tag
 
-PNG_ICONS = $(foreach icon,$(ICONS),icons/48x48/$(icon).png)
+SVG_ICONS = $(foreach icon,$(ICONS),icons/$(icon).svg)
 
 all: resources.rcc
 
-resources.rcc: resources.qrc $(PNG_ICONS)
+resources.rcc: resources.qrc $(SVG_ICONS)
 	rcc -o "$@" --binary "$<"
 
-icons/48x48/%.png: icons/scalable/%.svg
-	mkdir -p icons/48x48
+icons/%.png: icons/%.svg
 	convert -background none -geometry 48x48 "$<" "$@"
