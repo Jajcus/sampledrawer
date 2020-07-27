@@ -43,9 +43,6 @@ class Player:
         self.decoder.stateChanged.connect(self.decoder_state_changed)
         self.decoder.positionChanged.connect(self.decoder_pos_changed)
         self.decoder.bufferReady.connect(self.buffer_ready)
-        self.decoder.durationChanged.connect(self.duration_changed)
-        self.decoder.formatChanged.connect(self.format_changed)
-        self.decoder.metaDataChanged.connect(self.metadata_changed)
 
     @Slot(QAudioDecoder.Error)
     def decoder_error(self, err):
@@ -53,7 +50,7 @@ class Player:
 
     @Slot()
     def decoder_finished(self):
-        logger.info("Decoder finished")
+        logger.debug("Decoder finished")
         if self.output_dev:
             self.playing = False
             buf_size = self.output.bufferSize()
@@ -155,18 +152,6 @@ class Player:
         else:
             self.decoder.stop()
             self.window.play_btn.setEnabled(False)
-
-    @Slot(int)
-    def duration_changed(self, duration):
-        logger.info("Duration: %i", duration)
-
-    @Slot(QAudioFormat)
-    def format_changed(self, fmt):
-        logger.info("Format: %i", fmt)
-
-    @Slot(str,  object)
-    def metadata_changed(self, key, value):
-        logger.info("metadata: %s: %r", key, value)
 
     @Slot(str)
     def file_selected(self, path):
