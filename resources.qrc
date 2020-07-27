@@ -3,5 +3,17 @@
     <file>icons/index.theme</file>
     <file>icons/scalable/sampledrawer.svg</file>
     <file>icons/48x48/sampledrawer.png</file>
+    <file>icons/scalable/audio-x-generic.svg</file>
+    <file>icons/48x48/audio-x-generic.png</file>
+    <file>icons/scalable/folder.svg</file>
+    <file>icons/48x48/folder.png</file>
+    <file>icons/scalable/media-playback-pause.svg</file>
+    <file>icons/48x48/media-playback-pause.png</file>
+    <file>icons/scalable/media-playback-start.svg</file>
+    <file>icons/48x48/media-playback-start.png</file>
+    <file>icons/scalable/media-playback-stop.svg</file>
+    <file>icons/48x48/media-playback-stop.png</file>
+    <file>icons/scalable/tag.svg</file>
+    <file>icons/48x48/tag.png</file>
 </qresource>
 </RCC>
