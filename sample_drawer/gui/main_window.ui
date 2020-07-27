@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>897</width>
+    <width>1055</width>
     <height>832</height>
    </rect>
   </property>
@@ -18,6 +18,9 @@
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
+  </property>
+  <property name="windowIcon">
+   <iconset theme="sampledrawer"/>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">
@@ -93,8 +96,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>897</width>
-     <height>21</height>
+     <width>1055</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

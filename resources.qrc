@@ -1,0 +1,7 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>icons/index.theme</file>
+    <file>icons/scalable/sampledrawer.svg</file>
+    <file>icons/48x48/sampledrawer.png</file>
+</qresource>
+</RCC>
