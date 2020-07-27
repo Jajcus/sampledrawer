@@ -72,11 +72,11 @@ class MainWindow:
         logger.debug("library item selected: %r", metadata)
         if metadata:
             path = self.app.library.get_library_object_path(metadata)
+            self.window.waveform.set_duration(metadata.duration)
         else:
             path = None
         self.current_file = path
         self.window.waveform.set_waveform(None)
-        self.window.waveform.set_duration(metadata.duration)
         self.window.waveform.set_cursor_position(-1)
         if path:
             self.file_analyzer.request_waveform(path, self.waveform_received)
