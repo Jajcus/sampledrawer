@@ -2,8 +2,7 @@
 import logging
 import os
 
-from PySide2.QtCore import QFile, Slot, QResource
-from PySide2.QtGui import QIcon
+from PySide2.QtCore import QFile, Slot
 from PySide2.QtUiTools import QUiLoader
 
 from .file_browser import FileBrowser
@@ -20,8 +19,6 @@ from . import __path__ as PKG_PATH
 logger = logging.getLogger("main_window")
 
 UI_FILENAME = os.path.join(PKG_PATH[0], "main_window.ui")
-RESOURCE_FILENAMES = [os.path.join(PKG_PATH[0], "resources.rcc"),
-                      "resources.rcc"]
 
 class UiLoader(QUiLoader):
     def createWidget(self, className, parent=None, name=""):
@@ -34,11 +31,6 @@ class UiLoader(QUiLoader):
 class MainWindow:
     def __init__(self, app):
         self.app = app
-        for path in RESOURCE_FILENAMES:
-            if os.path.exists(path):
-                logger.debug("Loading resources from %r", path)
-                QResource.registerResource(path)
-        logger.debug("Icon search path: %r", QIcon.themeSearchPaths())
         ui_file = QFile(UI_FILENAME)
         ui_file.open(QFile.ReadOnly)
         loader = UiLoader()

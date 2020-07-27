@@ -1,10 +1,18 @@
 
 import logging
+import os
 
+from PySide2.QtCore import QResource
+from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 
 from .signal_handler import SignalHandler
 from .main_window import MainWindow
+
+from . import __path__ as PKG_PATH
+
+RESOURCE_FILENAMES = [os.path.join(PKG_PATH[0], "resources.rcc"),
+                      "resources.rcc"]
 
 logger = logging.getLogger("gui.app")
 
@@ -16,6 +24,16 @@ class GUIApplication:
         self.analyzer = app.analyzer
         logging.debug("qt_argv: %r", self.args.qt_argv)
         self.qapp = QApplication(self.args.qt_argv)
+        for path in RESOURCE_FILENAMES:
+            if os.path.exists(path):
+                logger.debug("Loading resources from %r", path)
+                QResource.registerResource(path)
+        QIcon.setThemeSearchPaths(QIcon.themeSearchPaths() + ["/home/jajcus/git/sampledrawer/icons"])
+        logger.debug("Icon search path: %r", QIcon.themeSearchPaths())
+        logger.debug("Icon fallback path: %r", QIcon.fallbackSearchPaths())
+        logger.debug("Theme name %r", QIcon.themeName())
+        logger.debug("Fallback theme name: %r", QIcon.fallbackThemeName())
+        self.qapp.setWindowIcon(QIcon(":/icons/48x48/sampledrawer.png"))
     def start(self):
         self.main_window = MainWindow(self)
         self.main_window.show()
