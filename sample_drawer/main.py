@@ -7,10 +7,7 @@ import sys
 
 import appdirs
 
-from PySide2.QtWidgets import QApplication
-
-from .gui.main_window import MainWindow
-from .gui.signal_handler import SignalHandler
+from .gui.app import GUIApplication
 from .library import Library, LibraryConflictError
 from .file_analyzer import FileAnalyzer
 
@@ -24,24 +21,18 @@ DEFAULT_IMPORT_RULES = [
 
 LOG_FORMAT = "%(asctime)-15s %(message)s"
 
-class Exitting(BaseException):
-    """Raised to abort code after Application.exit()"""
-    pass
+logger = logging.getLogger("main")
 
 class Application:
     def __init__(self):
         self.args = None
         self.main_window = None
         self.library = None
-        self.qapp = None
-        self.started = False
+        self.gui = None
         self.appdirs = appdirs.AppDirs(APP_NAME, APP_AUTHOR)
 
         self.parse_args()
         self.setup_logging()
-
-        logging.debug("qt_argv: %r", self.args.qt_argv)
-        self.qapp = QApplication(self.args.qt_argv)
 
         self.analyzer = FileAnalyzer()
         self.library = Library(self)
@@ -76,16 +67,16 @@ class Application:
         try:
             metadata = self.analyzer.get_file_metadata(path)
         except (OSError, RuntimeError) as err:
-            logging.warning("Cannot import %r: %s", path, err)
+            logger.warning("Cannot import %r: %s", path, err)
             return False
-        logging.debug(metadata)
+        logger.debug(metadata)
         metadata = metadata.rewrite(metadata_rules, root=root)
         if self.args.tags:
             metadata.add_tags(self.args.tags)
         try:
             self.library.import_file(metadata)
         except LibraryConflictError as err:
-            logging.info("File %r (%r) already in the library, known as %r."
+            logger.info("File %r (%r) already in the library, known as %r."
                         " Ignoring it.", path, err.md5, err.existing_name)
             return False
         return True
@@ -98,7 +89,7 @@ class Application:
         for dirpath, dirnames, filenames in os.walk(path):
             for name in filenames:
                 file_path = os.path.join(dirpath, name)
-                logging.info("Importing %r", file_path)
+                logger.info("Importing %r", file_path)
                 self.import_file(metadata_rules, file_path, root)
 
     def import_files(self, metadata_rules=DEFAULT_IMPORT_RULES):
@@ -111,24 +102,15 @@ class Application:
     def start(self):
         if self.args.import_files:
             return self.import_files()
-        self.main_window = MainWindow(self)
-        self.main_window.show()
-        signal_handler = SignalHandler()
-        signal_handler.activate()
-        self.qapp.aboutToQuit.connect(signal_handler.deactivate)
-        self.started = True
-        try:
-            return self.qapp.exec_()
-        except Exitting:
-            pass
-        finally:
-            self.started = False
+        else:
+            self.gui = GUIApplication(self)
+            try:
+                return self.gui.start()
+            finally:
+                self.gui = None
 
     def exit(self, code):
-        if self.qapp and self.started:
-            self.qapp.exit(code)
-        else:
-            sys.exit(code)
+        sys.exit(code)
 
 def main():
     app = Application()
