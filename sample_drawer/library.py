@@ -144,7 +144,7 @@ class Library:
                 cur.execute("INSERT INTO item_tags(item_id, tag_id)"
                                 " VALUES(?, ?)", (item_id, tag_id))
 
-            metadata_blob = []
+            fts_content = []
             for key in metadata:
                 mdtype = FIXED_METADATA_KEYS.get(key)
                 if mdtype and not mdtype.indexable:
@@ -153,12 +153,12 @@ class Library:
                 if not value:
                     continue
                 if isinstance(value, float):
-                    metadata_blob.append("{}={:.2f}".format(key, value))
+                    fts_content.append("{:.2f} ~~~".format(value))
                 else:
-                    metadata_blob.append("{}={}".format(key, value))
-            metadata_blob = " ".join(metadata_blob)
-            query = "INSERT INTO item_index (rowid, metadata_blob) VALUES (?,?)"
-            values = (item_id, metadata_blob)
+                    fts_content.append("{} ~~~".format(value))
+            fts_content = " ".join(fts_content)
+            query = "INSERT INTO item_index (rowid, content) VALUES (?,?)"
+            values = (item_id, fts_content)
             logging.debug("running: %r with %r", query, values)
             cur.execute(query, values)
             if copy:
