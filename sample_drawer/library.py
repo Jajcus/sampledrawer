@@ -6,7 +6,7 @@ import sqlite3
 
 from collections import defaultdict
 
-from .metadata import FIXED_METADATA_D, FIXED_METADATA_KEYS, Metadata
+from .metadata import FIXED_METADATA, FIXED_METADATA_D, FIXED_METADATA_KEYS, Metadata
 
 logger = logging.getLogger("library")
 
