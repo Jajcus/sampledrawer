@@ -19,6 +19,7 @@ class LibraryItems(QObject):
         self.app = app
         self.lib_tree = lib_tree
         self.library = app.library
+        self.input = window.search_query_input
         self.view = window.lib_items
         self.tree_conditions = []
         self.items = []
@@ -34,6 +35,7 @@ class LibraryItems(QObject):
         selection_model.selectionChanged.connect(self.selection_changed)
         tree_selection_model = window.lib_tree.selectionModel()
         tree_selection_model.selectionChanged.connect(self.tree_selection_changed)
+        self.input.editingFinished.connect(self.query_entered)
 
     def reload(self):
         self.model.clear()
@@ -66,7 +68,9 @@ class LibraryItems(QObject):
         self.run_query()
 
     def run_query(self):
-        query = SearchQuery(self.tree_conditions)
+        text_query = self.input.text()
+        query = SearchQuery.from_string(text_query)
+        query.add_conditions(self.tree_conditions)
         items = self.library.get_items(query, limit=ITEM_LIMIT + 1)
         if len(items) > ITEM_LIMIT:
             self.items_incomplete = True
@@ -75,3 +79,8 @@ class LibraryItems(QObject):
             self.items_incomplete = False
             self.items = items
         self.reload()
+
+    @Slot()
+    def query_entered(self):
+        self.run_query()
+
