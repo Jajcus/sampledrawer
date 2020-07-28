@@ -15,7 +15,7 @@ CREATE TABLE items (
 	md5 TEXT,
 	path TEXT,
 	source TEXT,
-	name TEXT,
+	name TEXT COLLATE NOCASE,
 	format TEXT,
 	format_subtype TEXT,
 	sample_rate INTEGER,
@@ -26,7 +26,7 @@ CREATE TABLE items (
 
 CREATE TABLE tags (
 	id INTEGER PRIMARY KEY,
-	name TEXT NOT NULL UNIQUE,
+	name TEXT COLLATE NOCASE NOT NULL UNIQUE,
 	item_count INTEGER DEFAULT 0
 );
 INSERT INTO tags(id, name) VALUES (0, "/"); -- pseudo-tag to count all library items
@@ -40,13 +40,13 @@ CREATE TABLE item_tags (
 
 CREATE TABLE custom_keys (
 	id INTEGER PRIMARY KEY,
-	name TEXT NOT NULL UNIQUE
+	name TEXT COLLATE NOCASE NOT NULL UNIQUE
 );
 CREATE TABLE item_custom_values (
 	id INTEGER PRIMARY KEY,
 	item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
 	key_id INTEGER NOT NULL REFERENCES custom_keys(id) ON DELETE CASCADE,
-	value TEXT,
+	value TEXT COLLATE NOCASE,
 	UNIQUE (item_id, key_id)
 );
 
