@@ -112,6 +112,7 @@ class LibraryItems(QObject):
         tree_selection_model.selectionChanged.connect(self.tree_selection_changed)
         self.input.editingFinished.connect(self.query_entered)
         self.input.textChanged.connect(self.query_changed)
+        self.run_query()
 
     def reload(self):
         self.model.clear()
