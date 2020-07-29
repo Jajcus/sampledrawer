@@ -2,7 +2,7 @@
 import logging
 import os
 
-from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt
+from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QItemSelectionModel
 from PySide2.QtWidgets import QApplication
 from PySide2.QtWidgets import QAbstractItemView
 from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem
@@ -26,9 +26,11 @@ class LibraryTree(QObject):
         self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.view.expanded.connect(self.resize_columns)
         self.view.collapsed.connect(self.resize_columns)
-        selection_model = self.view.selectionModel()
-        selection_model.selectionChanged.connect(self.selection_changed)
         self.reload()
+        selection_model = self.view.selectionModel()
+        selection_model.select(self.items["/"][0].index(),
+                               QItemSelectionModel.Select)
+        selection_model.selectionChanged.connect(self.selection_changed)
 
     def reload(self):
         self.model.clear()
