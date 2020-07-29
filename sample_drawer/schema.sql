@@ -50,7 +50,7 @@ CREATE TABLE item_custom_values (
 	UNIQUE (item_id, key_id)
 );
 
-CREATE VIRTUAL TABLE item_index USING fts4(tokenize=unicode61 "tokenchars=~" "separators=_");
+CREATE VIRTUAL TABLE fts USING fts4(tokenize=unicode61 "tokenchars=~" "separators=_");
 
 
 CREATE TRIGGER item_tags_insert_update_tag_count AFTER INSERT ON item_tags

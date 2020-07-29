@@ -263,7 +263,7 @@ class MiscQuery(SearchCondition):
         query_string = []
         for part in queries:
             query_string.append(quote(part.query))
-        return SQLQuery(["item_index fts"],
+        return SQLQuery(["fts fts"],
                         "item.id = fts.docid AND fts.content MATCH ?",
                         [" ".join(query_string)])
 

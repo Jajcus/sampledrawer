@@ -157,7 +157,7 @@ class Library:
                 else:
                     fts_content.append("{} ~~~".format(value))
             fts_content = " ".join(fts_content)
-            query = "INSERT INTO item_index (rowid, content) VALUES (?,?)"
+            query = "INSERT INTO fts (rowid, content) VALUES (?,?)"
             values = (item_id, fts_content)
             logging.debug("running: %r with %r", query, values)
             cur.execute(query, values)
