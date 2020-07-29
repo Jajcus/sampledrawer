@@ -121,7 +121,13 @@ class SearchQuery:
             if query.where_clause:
                 where.append(query.where_clause)
             params += query.parameters
-        sql_query = "SELECT {} FROM {}".format(column_list, ", ".join(tables))
+        joins = tables[:1]
+        for table in tables[1:]:
+            if "JOIN" in table:
+                joins.append(" " + table)
+            else:
+                joins.append(", " + table)
+        sql_query = "SELECT {} FROM {}".format(column_list, "".join(joins))
         if where:
             sql_query += " WHERE {}".format(" AND ".join(where))
         if order_by:
@@ -193,7 +199,7 @@ SearchQuery.add_condition_type(TagQuery)
 
 class MetadataQuery(SearchCondition):
     def __init__(self, key, value, oper="="):
-        self.key = key
+        self.key = key.lower()
         self.value = value
         self.oper = oper
     def __repr__(self):
@@ -241,8 +247,8 @@ class MetadataQuery(SearchCondition):
                          " AND icv{i}.value = ?)"
                          .format(i=cond_number))
             params += [self.key, self.value]
-            tables = ["item_custom_values icv{i}".format(i=cond_number),
-                    "custom_keys ck{i}".format(i=cond_number)]
+            tables = ["LEFT JOIN item_custom_values icv{i}".format(i=cond_number),
+                    "LEFT JOIN custom_keys ck{i}".format(i=cond_number)]
             return SQLQuery(tables, "(" + " OR ".join(where) + ")", params)
         else:
             return SQLQuery(None, where[0], params)
