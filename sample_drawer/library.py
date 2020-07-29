@@ -189,6 +189,41 @@ class Library:
                 result.append(self._metadata_from_row(row))
         return result
 
+    def get_completions(self, query, **kwargs):
+        columns = ["offsets(compl_fts.fts)", "compl_fts.content"]
+        sql_query, params = query.as_sql(columns=columns, **kwargs)
+        result = set()
+        with self.db:
+            cur = self.db.cursor()
+            logging.debug("running: %r with %r", sql_query, params)
+            cur.execute(sql_query, params)
+            for offsets, content in cur.fetchall():
+                logger.debug("offsets: %r, content: %r", offsets, content)
+                offsets = [int(offset) for offset in offsets.split()]
+                # [0, 0, token0_match_start, token0_match_length,
+                #  0, 1, token1_match_start, token1_match_length,
+                #  ...]
+                # take start of the first token and the end of the last one
+                if not query.quoted:
+                    # single word
+                    start = offsets[2]
+                    end = start + offsets[3]
+                    match = content[start:end]
+                    logger.debug("match: %r", match)
+                    result.add(match)
+                    continue
+                else:
+                    start = offsets[2]
+                    end = offsets[-2] + offsets[-1]
+                    match = content[start:end]
+                    if query.query_text[-1].isspace():
+                        follows = content[end:].split(" ~~~")[0]
+                        next_word = follows.split(None, 1)[0]
+                        match += " " + next_word
+                logger.debug("match: %r", match)
+                result.add(match)
+        return result
+
     def _metadata_from_row(self, row):
         data = {}
         for key in row.keys():

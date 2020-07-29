@@ -3,7 +3,7 @@ import logging
 import re
 import shlex
 
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 from .metadata import VALID_TAG_RE, VALID_KEY_RE, FIXED_METADATA_D, FIXED_METADATA_KEYS
 
@@ -19,7 +19,7 @@ BASE_SQL_QUERY = SQLQuery(["items item"], "", [])
 
 DANGEROUS_CHARS_RE = re.compile(r"[\"'\\]")
 NEED_QUOTES_RE = re.compile(r"[ \\\"\t]")
-NEED_ESCAPING_RE = re.compile(r"[\"\\]")
+NEED_ESCAPING_RE = re.compile(r"([\"\\])")
 
 logger = logging.getLogger("search")
 
@@ -30,7 +30,7 @@ def quote(data, force=False):
     shell syntax than we need in our queries."""
     if not force and not NEED_QUOTES_RE.search(data):
         return data
-    return '"' + NEED_ESCAPING_RE.sub(r"\\\0", data) + '"'
+    return '"' + NEED_ESCAPING_RE.sub(r"\\\1", data) + '"'
 
 class SearchCondition:
     applied_in_group = False
@@ -80,8 +80,10 @@ class SearchQuery:
                 logging.warning("Cannot understand query %r", part)
                 continue
         return cls(conditions)
+
     def add_conditions(self, conditions):
         self.conditions += list(conditions)
+
     def as_string(self):
         conds = []
         for cond in self.conditions:
@@ -90,6 +92,7 @@ class SearchQuery:
                 parts.append(quote(part))
             conds.append("".join(cond_s))
         return " ".join(conds)
+
     def as_sql(self, columns=None, order_by="item.name", limit=100):
         logger.debug("Translating %r to SQL query", self.conditions)
         if columns:
@@ -274,3 +277,73 @@ class MiscQuery(SearchCondition):
                         [" ".join(query_string)])
 
 SearchQuery.add_condition_type(MiscQuery)
+
+class CompletionQuery(SearchQuery):
+    def __init__(self, query_text, start_index, quoted, conditions):
+        self.query_text = query_text
+        self.quoted = quoted
+        self.start_index = start_index
+        compl_condition = CompletionQueryCondition(query_text[start_index:])
+        self.conditions = conditions + [compl_condition]
+    @property
+    def prefix(self):
+        return self.query_text[self.start_index:]
+    @classmethod
+    def from_string(cls, query_text):
+        logger.debug("Considering %r for completion", query_text)
+        got_it = False
+        base_query = None
+        to_complete = None
+        if '"' in query_text:
+            logger.debug("'\"' found")
+            # check for incomplete quoted string
+            left, right = query_text.rsplit('"', 1)
+            if not left or left[-1].isspace():
+                if not right:
+                    logger.debug("nothing to complete")
+                    return None
+                try:
+                    # if that parses, then assume we have no open quote left
+                    shlex.split(left + '"')
+                except ValueError:
+                    logger.debug("shlex.split(%r) failed - assuming open quote",
+                                 left + '"')
+                    base_query = SearchQuery.from_string(left)
+                    return cls(query_text, len(left) + 1, True,
+                               base_query.conditions)
+
+        # split on the last whitespace
+        split = query_text.rsplit(None, 1)
+        if len(split) > 1:
+            base_query = split[0]
+            to_complete = split[1]
+            start_index = len(query_text) - len(to_complete)
+        else:
+            base_query = ""
+            to_complete = query_text
+            start_index = 0
+        if not to_complete or ( not to_complete[-1].isalpha()
+                and not to_complete[-1].isdigit()):
+            logger.debug("nothing to complete")
+            return None
+
+        if base_query:
+            base_conditions = SearchQuery.from_string(base_query).conditions
+        else:
+            base_conditions = []
+        return cls(query_text, start_index, False, base_conditions)
+
+class CompletionQueryCondition(SearchCondition):
+    applied_in_group = False
+    def __init__(self, query):
+        self.query = query
+    def __repr__(self):
+        return "<MiscQuery {!r}>".format(self.query)
+    @classmethod
+    def from_string(cls, query):
+        return cls(query)
+    def get_sql_query(self, cond_number):
+        query_string = quote(self.query + "*")
+        return SQLQuery(["fts compl_fts"],
+                        "item.id = compl_fts.docid AND compl_fts.content MATCH ?",
+                        [query_string])

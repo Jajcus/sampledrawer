@@ -3,14 +3,15 @@ import logging
 import os
 
 from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt
-from PySide2.QtWidgets import QAbstractItemView
+from PySide2.QtWidgets import QAbstractItemView, QCompleter
 from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem
 
-from ..search import SearchQuery
+from ..search import SearchQuery, CompletionQuery
 
 logger = logging.getLogger("lib_items")
 
 ITEM_LIMIT = 100
+COMPLETION_LIMIT = 10
 
 class LibraryItems(QObject):
     item_selected = Signal(object)
@@ -26,6 +27,12 @@ class LibraryItems(QObject):
         self.items_incomplete = False
         self.model = QStandardItemModel()
         self.model.setColumnCount(1)
+        self.compl_model = QStandardItemModel()
+        self.compl_model.setColumnCount(1)
+        self.completer = QCompleter(self.compl_model)
+        self.completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.completer.setModelSorting(QCompleter.CaseSensitivelySortedModel)
+        self.input.setCompleter(self.completer)
         self.view.setHeaderHidden(True)
         self.view.setIndentation(0)
         self.view.setModel(self.model)
@@ -36,6 +43,7 @@ class LibraryItems(QObject):
         tree_selection_model = window.lib_tree.selectionModel()
         tree_selection_model.selectionChanged.connect(self.tree_selection_changed)
         self.input.editingFinished.connect(self.query_entered)
+        self.input.textChanged.connect(self.query_changed)
 
     def reload(self):
         self.model.clear()
@@ -84,3 +92,22 @@ class LibraryItems(QObject):
     def query_entered(self):
         self.run_query()
 
+    @Slot()
+    def query_changed(self, text):
+        compl_query = CompletionQuery.from_string(text)
+        if compl_query:
+            columns = ["offsets(compl_fts.fts)", "compl_fts.content"]
+            compl_query.add_conditions(self.tree_conditions)
+            sql_query, params = compl_query.as_sql(columns=columns)
+            logger.debug("completing %r with query %r %r",
+                         compl_query.prefix, sql_query, params)
+            matches = self.library.get_completions(compl_query,
+                                                   limit=COMPLETION_LIMIT)
+            self.compl_model.clear()
+            for match in sorted(matches):
+                match = text[:compl_query.start_index] + match
+                logger.debug("Adding match: %r", match)
+                s_item = QStandardItem(match)
+                self.compl_model.appendRow([s_item])
+        else:
+            self.model.clear()
