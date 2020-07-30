@@ -7,7 +7,7 @@ from PySide2.QtWidgets import QApplication
 from PySide2.QtWidgets import QAbstractItemView
 from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem
 
-from ..search import TagQuery
+from ..search import TagIncludeQuery
 
 logger = logging.getLogger("lib_tree")
 
@@ -74,7 +74,7 @@ class LibraryTree(QObject):
             item = self.model.itemFromIndex(index)
             logger.debug("Selected item: %r", item)
             tag = item.data()
-            result.append(TagQuery(tag))
+            result.append(TagIncludeQuery(tag))
         return result
 
     @Slot()

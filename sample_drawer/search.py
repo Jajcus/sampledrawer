@@ -140,65 +140,82 @@ class SearchQuery:
         logger.debug("result query: %r, %r", sql_query, params)
         return sql_query, params
 
-class TagQuery(SearchCondition):
+class TagIncludeQuery(SearchCondition):
     applied_in_group = True
-    def __init__(self, tag_name, exclude=False):
+    def __init__(self, tag_name):
         self.tag_name = tag_name
-        self.exclude = exclude
     def __repr__(self):
-        return "<TagQuery {}{!r}>".format("exclude " if self.exclude else "",
-                                        self.tag_name)
+        return "<TagIncludeQuery {!r}>".format(self.tag_name)
     @classmethod
     def from_string(cls, query):
         if len(query) < 2:
-            raise ValueError("Not a tag query: %r - too short" % (query,))
-        if query.startswith("+"):
-            exclude = False
-        elif query.startswith("-"):
-            exclude = True
-        else:
-            raise ValueError("Not a tag query: %r - bad prefix" % (query,))
+            raise ValueError("Not a tag include query: %r - too short" % (query,))
+        if query[0] != "?":
+            raise ValueError("Not a tag include query: %r - does not start with '?'" % (query,))
         if query[1:] == "/":
-            return cls("/", exclude)
+            return cls("/")
         elif not VALID_TAG_RE.match(query[1:]):
             raise ValueError("Not a tag query: %r - bad tag name" % (query,))
-        return cls(query[1:], exclude)
+        return cls(query[1:])
 
     @classmethod
     def get_sql_group_query(cls, tag_queries, cond_number):
         included = set()
-        excluded = set()
         include_all = False
         for tag_query in tag_queries:
             if tag_query.tag_name == "/":
-                if tag_query.exclude:
-                    return NOTHING_SQL_QUERY
-                else:
-                    include_all = True
-                continue
-            if tag_query.exclude:
-                excluded.add(tag_query.tag_name)
-            else:
-                included.add(tag_query.tag_name)
-        if include_all:
-            included = set()
-        if not included and not excluded:
+                return NULL_SQL_QUERY
+            included.add(tag_query.tag_name)
+
+        if not included:
             return NULL_SQL_QUERY
 
         where = ["itag.item_id = item.id"]
-        params = []
-
-        if included:
-            where.append("itag.tag_id IN (SELECT id FROM tags WHERE name IN ({}))"
-                         .format(",".join(["?"] * len(included))))
-            params += list(included)
-        if excluded:
-            where.append("itag.tag_id NOT IN (SELECT id FROM tags WHERE tag_name IN ({}))"
-                         .format(",".join(["?"] * len(included))))
-            params += list(excluded)
+        where.append("itag.tag_id IN (SELECT id FROM tags WHERE name IN ({}))"
+                     .format(",".join(["?"] * len(included))))
+        params = list(included)
         return SQLQuery(["item_tags itag"], " AND ".join(where), params)
 
-SearchQuery.add_condition_type(TagQuery)
+SearchQuery.add_condition_type(TagIncludeQuery)
+
+class TagExcludeQuery(SearchCondition):
+    applied_in_group = True
+    def __init__(self, tag_name):
+        self.tag_name = tag_name
+    def __repr__(self):
+        return "<TagExcludeQuery {!r}>".format(self.tag_name)
+    @classmethod
+    def from_string(cls, query):
+        if len(query) < 2:
+            raise ValueError("Not a tag exclude query: %r - too short" % (query,))
+        if query[0] != "-":
+            raise ValueError("Not a tag exclude query: %r - does not start with '-'" % (query,))
+        if query[1:] == "/":
+            return cls("/")
+        elif not VALID_TAG_RE.match(query[1:]):
+            raise ValueError("Not a tag query: %r - bad tag name" % (query,))
+        return cls(query[1:])
+
+    @classmethod
+    def get_sql_group_query(cls, tag_queries, cond_number):
+        excluded = set()
+        for tag_query in tag_queries:
+            if tag_query.tag_name == "/":
+                return NOTHING_SQL_QUERY
+            excluded.add(tag_query.tag_name)
+
+        if not excluded:
+            return NULL_SQL_QUERY
+
+        params = list(excluded)
+        placeholders = ", ".join(["?"] * len(params))
+        where = ("item.id NOT IN ("
+                    " SELECT item_id FROM item_tags, tags"
+                    " WHERE item_tags.tag_id = tags.id"
+                        " AND tags.name IN ({}))".format(placeholders))
+        return SQLQuery([], where, params)
+
+SearchQuery.add_condition_type(TagExcludeQuery)
 
 class MetadataQuery(SearchCondition):
     def __init__(self, key, value, oper="="):
