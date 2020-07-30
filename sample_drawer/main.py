@@ -58,7 +58,7 @@ class Application:
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Sample Drawer – audio sample browser and organizer.')
-        parser.set_defaults(debug_level=logging.INFO)
+        parser.set_defaults(debug_level=logging.INFO, metadata=[])
         parser.add_argument('--root', action='store', dest='root',
                             help='For GUI: Display only this directory in filesystem browser'
                             ' For import: root for automatic categorization')
