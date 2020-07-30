@@ -27,6 +27,7 @@ class ItemMimeData(QMimeData):
         QMimeData.__init__(self)
         self._app = app
         self._items = [item.data() for item in items]
+        self._paths = None
         self._formats = None
     def formats(self):
         if self._formats is not None:
@@ -47,10 +48,14 @@ class ItemMimeData(QMimeData):
         if mime_type not in self.formats():
             logger.debug("unsupported type requested")
             return None
-        paths = []
-        for item in self._items:
-            path = self._app.library.get_library_object_path(item)
-            paths.append(path)
+
+        paths = self._paths
+        if paths is None:
+            paths = []
+            for item in self._items:
+                path = self._app.library.get_pretty_path(item, timeout=60)
+                paths.append(path)
+            self._paths = paths
 
         if mime_type == "text/plain":
             return " ".join(paths)

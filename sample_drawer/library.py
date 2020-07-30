@@ -3,6 +3,7 @@ import os
 import logging
 import shutil
 import sqlite3
+import threading
 
 from collections import defaultdict
 
@@ -30,6 +31,7 @@ DATABASE_VERSION = 0
 class Library:
     def __init__(self, app):
         self.db = None
+        self.tmp_dir = None
         self.app = app
         self.base_path = os.path.join(app.appdirs.user_data_dir,
                                       "library")
@@ -38,6 +40,28 @@ class Library:
             self.open_database(db_path)
         else:
             self.create_database(db_path)
+
+        self.make_tmp_dir()
+
+    def __del__(self):
+        self.remove_tmp_dir()
+
+    def make_tmp_dir(self):
+        # under base dir, so it is the same filesystem and we can hard-link there
+        self.tmp_dir = os.path.join(self.base_path,
+                                    "tmp.{}".format(os.getpid()))
+        logger.debug("Creating temporary dir %r", self.tmp_dir)
+        os.makedirs(self.tmp_dir, exist_ok=True)
+
+    def remove_tmp_dir(self):
+        if self.tmp_dir and os.path.exists(self.tmp_dir):
+            logger.debug("Removing temporary dir %r", self.tmp_dir)
+            try:
+                shutil.rmtree(self.tmp_dir)
+            except OSError as err:
+                logger.debug("removing %r failed: %s", self.tmp_dir, err)
+                pass
+            self.tmp_dir = None
 
     def create_database(self, db_path):
         os.makedirs(self.base_path, exist_ok=True)
@@ -98,6 +122,47 @@ class Library:
         else:
             ext = ".bin"
         return os.path.join(self.base_path, md5[0], md5[1:3], md5 + ext)
+
+    def get_pretty_path(self, metadata, timeout=10.0):
+        if metadata.path:
+            return metadata.path
+        md5 = metadata.md5
+        ext = metadata.format
+        if ext:
+            ext = "." + ext.lower()
+        else:
+            ext = ".bin"
+        orig_path = os.path.join(self.base_path, md5[0], md5[1:3], md5 + ext)
+        filename = metadata.name.replace("/", "_") + ext
+        new_path = os.path.join(self.tmp_dir, filename)
+
+        # metadata.name does not have to be unique
+        i = 0
+        while os.path.exists(new_path):
+            i += 1
+            new_path = os.path.join(self.tmp_dir, str(i), filename)
+
+        os.makedirs(os.path.dirname(new_path), exist_ok=True)
+        try:
+            logger.debug("hard-linking %r to %r", orig_path, new_path)
+            os.link(orig_path, new_path)
+        except OSError as err:
+            logger.debug("hard-link failed, trying to copy instead")
+            shutil.copy(orig_path, new_path)
+
+        def cleanup():
+            if not os.path.exists(new_path):
+                return
+            logger.debug("unlinking %r", new_path)
+            try:
+                os.unlink(new_path)
+            except OSError as err:
+                logger.debug("%r: %s", err)
+
+        t = threading.Timer(timeout, cleanup)
+        t.daemon = True
+        t.start()
+        return new_path
 
     def import_file(self, metadata, copy=True):
         md5 = metadata.md5
