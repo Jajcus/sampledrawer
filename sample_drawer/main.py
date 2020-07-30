@@ -10,6 +10,7 @@ import appdirs
 from .gui.app import GUIApplication
 from .library import Library, LibraryConflictError
 from .file_analyzer import FileAnalyzer
+from .metadata import FIXED_METADATA_D, FIXED_METADATA_KEYS, VALID_KEY_RE
 
 APP_NAME = "sampledrawer"
 APP_AUTHOR = "Jajcus"
@@ -22,6 +23,24 @@ DEFAULT_IMPORT_RULES = [
 LOG_FORMAT = "%(asctime)-15s %(message)s"
 
 logger = logging.getLogger("main")
+
+def metadata_key_value(arg):
+    if "=" not in arg:
+        raise argparse.ArgumentTypeError("'=' missing")
+    key, value = arg.split("=", 1)
+    if key.startswith("_"):
+        # explicit fixed metadata reference
+        try:
+            key = FIXED_METADATA_KEYS[key]
+        except KeyError:
+            raise argparse.ArgumentTypeError("{!r} is not a valid key".format(key))
+    else:
+        mdtype = FIXED_METADATA_D.get(key)
+    if mdtype:
+        if not mdtype.editable:
+            raise argparse.ArgumentTypeError("{!r} is not editable".format(key))
+        key = "_" + mdtype.name
+    return (key.lower(), value)
 
 class Application:
     def __init__(self):
@@ -57,6 +76,9 @@ class Application:
                             help='Import files to the library')
         parser.add_argument('--tag', action="append", dest='tags',
                             help='Tag to select or add')
+        parser.add_argument('--set', action="append", dest='metadata',
+                            metavar='KEY=VALUE', type=metadata_key_value,
+                            help='Set custom metadata')
         self.args = parser.parse_args()
 
     def setup_logging(self):
@@ -73,6 +95,8 @@ class Application:
         metadata = metadata.rewrite(metadata_rules, root=root)
         if self.args.tags:
             metadata.add_tags(self.args.tags)
+        for key, value in self.args.metadata:
+            metadata[key] = value
         try:
             self.library.import_file(metadata)
         except LibraryConflictError as err:

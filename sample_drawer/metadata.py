@@ -116,11 +116,11 @@ class Metadata:
         if value is None:
             value = ""
         else:
-            if mdtype.type is float:
+            if mdtype and mdtype.type is float:
                 value = "{:.2f}".format(value)
             else:
                 value = str(value)
-            if mdtype.unit:
+            if mdtype and mdtype.unit:
                 value = "{} {}".format(value, mdtype.unit)
         if key.startswith("_"):
             key = key[1:]
@@ -135,6 +135,7 @@ class Metadata:
                 value = mdtype.type(value)
         elif not VALID_KEY_RE.match(key):
             raise ValueError("Invalid meta-data key: {!r}".format(key))
+        logger.debug("setting %r to %r", key, value)
         self._data[key] = value
     def __contains__(self, key):
         return key in self._data

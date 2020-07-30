@@ -209,6 +209,20 @@ class Library:
                 cur.execute("INSERT INTO item_tags(item_id, tag_id)"
                                 " VALUES(?, ?)", (item_id, tag_id))
 
+            for key in metadata:
+                if key.startswith("_"):
+                    continue
+                value = metadata[key]
+                cur.execute("SELECT id FROM custom_keys WHERE name=?", (key,))
+                row = cur.fetchone()
+                if row:
+                    key_id = row[0]
+                else:
+                    cur.execute("INSERT INTO custom_keys(name) VALUES(?)", (key,))
+                    key_id = cur.lastrowid
+                cur.execute("INSERT INTO item_custom_values(item_id, key_id, value)"
+                                " VALUES(?, ?, ?)", (item_id, key_id, value))
+
             fts_content = []
             for key in metadata:
                 mdtype = FIXED_METADATA_KEYS.get(key)
@@ -295,8 +309,6 @@ class Library:
             if key in FIXED_METADATA_D:
                 data["_" + key] = row[key]
 
-        # FIXME: add custom key support
-
         item_id = row['id']
         logging.debug("Looking for tags of item %r", item_id)
         cur = self.db.cursor()
@@ -310,4 +322,14 @@ class Library:
                 # leave only leaf tags
                 continue
             tags.append(tag)
+
+
+        logging.debug("Looking for custom metadata of item %r", item_id)
+        cur.execute("SELECT ck.name AS key, icv.value AS value"
+                    " FROM item_custom_values icv"
+                        " JOIN custom_keys ck ON (ck.id = icv.key_id)"
+                    " WHERE icv.item_id=?", (item_id,))
+        for key, value in cur.fetchall():
+            data[key] = value
+
         return Metadata(data, tags)
