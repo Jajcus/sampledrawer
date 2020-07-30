@@ -217,6 +217,37 @@ class TagExcludeQuery(SearchCondition):
 
 SearchQuery.add_condition_type(TagExcludeQuery)
 
+class TagRequireQuery(SearchCondition):
+    def __init__(self, tag_name):
+        self.tag_name = tag_name
+    def __repr__(self):
+        return "<TagIncludeQuery {!r}>".format(self.tag_name)
+    @classmethod
+    def from_string(cls, query):
+        if len(query) < 2:
+            raise ValueError("Not a tag require query: %r - too short" % (query,))
+        if query[0] != "+":
+            raise ValueError("Not a tag require query: %r - does not start with '?'" % (query,))
+        if query[1:] == "/":
+            return cls("/")
+        elif not VALID_TAG_RE.match(query[1:]):
+            raise ValueError("Not a tag query: %r - bad tag name" % (query,))
+        return cls(query[1:])
+
+    def get_sql_query(self, cond_number):
+        if self.tag_name == "/":
+            return NULL_SQL_QUERY
+
+        tables = ["item_tags itag{0}".format(cond_number),
+                    "tags tag{0}".format(cond_number)]
+        where = ("itag{0}.item_id = item.id"
+                    " AND itag{0}.tag_id = tag{0}.id"
+                    " AND tag{0}.name = ?".format(cond_number))
+        params = [self.tag_name]
+        return SQLQuery(tables, where, params)
+
+SearchQuery.add_condition_type(TagRequireQuery)
+
 class MetadataQuery(SearchCondition):
     def __init__(self, key, value, oper="="):
         self.key = key.lower()
