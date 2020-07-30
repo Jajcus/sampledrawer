@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1055</width>
+    <width>1065</width>
     <height>832</height>
    </rect>
   </property>
@@ -20,7 +20,8 @@
    <string>MainWindow</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="sampledrawer"/>
+   <iconset theme="sampledrawer">
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">
@@ -96,8 +97,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1055</width>
-     <height>22</height>
+     <width>1065</width>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -216,6 +217,65 @@
    </attribute>
    <widget class="QWidget" name="dockWidgetContents_3">
     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <property name="sizeConstraint">
+        <enum>QLayout::SetDefaultConstraint</enum>
+       </property>
+       <item>
+        <widget class="QToolButton" name="tags_and_btn">
+         <property name="text">
+          <string>AND</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup</string>
+         </attribute>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="tags_or_btn">
+         <property name="text">
+          <string>OR</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <attribute name="buttonGroup">
+          <string notr="true">buttonGroup</string>
+         </attribute>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="tags_not_btn">
+         <property name="text">
+          <string>NOT</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
      <item>
       <widget class="QTreeView" name="lib_tree">
        <property name="minimumSize">
@@ -469,5 +529,40 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>tags_not_btn</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>tags_and_btn</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>864</x>
+     <y>127</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>777</x>
+     <y>127</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tags_not_btn</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>tags_or_btn</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>864</x>
+     <y>127</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>821</x>
+     <y>127</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="buttonGroup"/>
+ </buttongroups>
 </ui>

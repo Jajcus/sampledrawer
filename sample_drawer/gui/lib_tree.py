@@ -7,7 +7,7 @@ from PySide2.QtWidgets import QApplication
 from PySide2.QtWidgets import QAbstractItemView
 from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem
 
-from ..search import TagIncludeQuery
+from ..search import TagIncludeQuery, TagRequireQuery, TagExcludeQuery
 
 logger = logging.getLogger("lib_tree")
 
@@ -17,6 +17,9 @@ class LibraryTree(QObject):
         self.app = app
         self.library = app.library
         self.view = window.lib_tree
+        self.and_btn = window.tags_and_btn
+        self.or_btn = window.tags_or_btn
+        self.not_btn = window.tags_not_btn
         self.items = {}
         self.model = QStandardItemModel()
         self.model.setColumnCount(2)
@@ -68,13 +71,19 @@ class LibraryTree(QObject):
 
     def get_current_conditions(self):
         result = []
+        if self.not_btn.isChecked():
+            cond = TagExcludeQuery
+        elif self.or_btn.isChecked():
+            cond = TagIncludeQuery
+        else:
+            cond = TagRequireQuery
         for index in self.view.selectedIndexes():
             if index.column() > 0:
                 continue
             item = self.model.itemFromIndex(index)
             logger.debug("Selected item: %r", item)
             tag = item.data()
-            result.append(TagIncludeQuery(tag))
+            result.append(cond(tag))
         return result
 
     @Slot()
