@@ -21,6 +21,7 @@ class GUIApplication:
         self.app = app
         self.args = app.args
         self.library = app.library
+        self.scratchpad = app.scratchpad
         self.analyzer = app.analyzer
         logging.debug("qt_argv: %r", self.args.qt_argv)
         self.qapp = QApplication(self.args.qt_argv)

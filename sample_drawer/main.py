@@ -9,6 +9,7 @@ import appdirs
 
 from .gui.app import GUIApplication
 from .library import Library, LibraryConflictError
+from .scratchpad import Scratchpad
 from .file_analyzer import FileAnalyzer
 from .metadata import FIXED_METADATA_D, FIXED_METADATA_KEYS, VALID_KEY_RE
 
@@ -55,6 +56,7 @@ class Application:
 
         self.analyzer = FileAnalyzer()
         self.library = Library(self)
+        self.scratchpad = Scratchpad(self, self.library, self.args.scratchpad)
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Sample Drawer – audio sample browser and organizer.')
@@ -79,6 +81,8 @@ class Application:
         parser.add_argument('--set', action="append", dest='metadata',
                             metavar='KEY=VALUE', type=metadata_key_value,
                             help='Set custom metadata')
+        parser.add_argument('--scratchpad', default="main",
+                            help='Select scratchpad to use')
         self.args = parser.parse_args()
 
     def setup_logging(self):

@@ -93,7 +93,7 @@ class SearchQuery:
             conds.append("".join(cond_s))
         return " ".join(conds)
 
-    def as_sql(self, columns=None, order_by="item.name", limit=100):
+    def as_sql(self, columns=None, order_by="item.name", limit=100, scratchpad_id=None):
         logger.debug("Translating %r to SQL query", self.conditions)
         if columns:
             column_names = ["item." + name if "." not in name else name
@@ -130,6 +130,11 @@ class SearchQuery:
                 joins.append(" " + table)
             else:
                 joins.append(", " + table)
+        if scratchpad_id is None:
+            where.append("scratchpad_id IS NULL")
+        else:
+            where.append("scratchpad_id = ?")
+            params.append(scratchpad_id)
         sql_query = "SELECT {} FROM {}".format(column_list, "".join(joins))
         if where:
             sql_query += " WHERE {}".format(" AND ".join(where))

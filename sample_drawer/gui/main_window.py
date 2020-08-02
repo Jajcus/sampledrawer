@@ -13,6 +13,7 @@ from ..metadata import Metadata
 from .file_analyzer import AsyncFileAnalyzer, FileKey
 from .metadata_browser import MetadataBrowser
 from .waveform import WaveformWidget, WaveformCursorWidget
+from .scratchpad import ScratchpadItems
 
 from . import __path__ as PKG_PATH
 
@@ -40,10 +41,12 @@ class MainWindow:
         self.lib_items = LibraryItems(app, self.window, self.lib_tree)
         self.sample_player = Player(self.window)
         self.file_analyzer = AsyncFileAnalyzer()
+        self.scratchpad_items = ScratchpadItems(app, self.window, self.file_analyzer)
         self.metadata_browser = MetadataBrowser(self.window.metadata_view)
         self.file_browser.file_selected.connect(self.sample_player.file_selected)
         self.file_browser.file_selected.connect(self.file_selected)
         self.lib_items.item_selected.connect(self.item_selected)
+        self.scratchpad_items.item_selected.connect(self.sp_item_selected)
         self.current_file = None
 
     def show(self):
@@ -64,6 +67,22 @@ class MainWindow:
         logger.debug("library item selected: %r", metadata)
         if metadata:
             path = self.app.library.get_library_object_path(metadata)
+            self.window.waveform.set_duration(metadata.duration)
+        else:
+            path = None
+        self.current_file = path
+        self.window.waveform.set_waveform(None)
+        self.window.waveform.set_cursor_position(-1)
+        if path:
+            self.file_analyzer.request_waveform(path, self.waveform_received)
+        self.metadata_browser.set_metadata(metadata)
+        self.sample_player.file_selected(path)
+
+    @Slot()
+    def sp_item_selected(self, metadata):
+        logger.debug("scratchpad item selected: %r", metadata)
+        if metadata:
+            path = self.app.scratchpad.get_object_path(metadata)
             self.window.waveform.set_duration(metadata.duration)
         else:
             path = None

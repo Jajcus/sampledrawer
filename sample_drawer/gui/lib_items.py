@@ -1,6 +1,7 @@
 
 import logging
 import os
+import json
 
 from urllib.parse import urlunsplit
 
@@ -32,7 +33,7 @@ class ItemMimeData(QMimeData):
     def formats(self):
         if self._formats is not None:
             return self._formats
-        result = []
+        result = ["application/x-sampledrawer-lib-items"]
         if len(self._items) == 1:
             metadata = self._items[0]
             mime_type = MIMETYPES.get(metadata.format, "application/octet-stream")
@@ -48,6 +49,12 @@ class ItemMimeData(QMimeData):
         if mime_type not in self.formats():
             logger.debug("unsupported type requested")
             return None
+
+        if mime_type == "application/x-sampledrawer-lib-items":
+            result = []
+            for item in self._items:
+                result.append({"name": item.name, "md5": item.md5, "path": item.path})
+            return json.dumps(result)
 
         paths = self._paths
         if paths is None:

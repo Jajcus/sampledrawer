@@ -6,7 +6,7 @@ CREATE TABLE db_meta (
 
 CREATE TABLE scratchpads (
 	id INTEGER PRIMARY KEY,
-	scratchpad_name TEXT UNIQUE NOT NULL
+	name TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE items (
