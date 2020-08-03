@@ -5,8 +5,8 @@ import os
 from urllib.parse import urlunsplit
 
 from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QMimeData, QByteArray
-from PySide2.QtWidgets import QAbstractItemView, QCompleter
-from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem
+from PySide2.QtWidgets import QAbstractItemView, QCompleter, QShortcut
+from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem, QKeySequence
 
 from ..search import SearchQuery, CompletionQuery
 from .lib_items import MIMETYPES
@@ -113,9 +113,11 @@ class ScratchpadItems(QObject):
         self.view.setDragEnabled(True)
         self.view.setAcceptDrops(True)
         self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        selection_model = self.view.selectionModel()
-        selection_model.selectionChanged.connect(self.selection_changed)
+        self.selection_model = self.view.selectionModel()
+        self.selection_model.selectionChanged.connect(self.selection_changed)
         self.get_items()
+        shortcut = QShortcut(QKeySequence(Qt.Key_Delete), self.view)
+        shortcut.activated.connect(self.delete_selected)
 
     def reload(self):
         self.model.clear()
@@ -143,6 +145,19 @@ class ScratchpadItems(QObject):
     def get_items(self):
         self.items = self.scratchpad.get_items()
         self.reload()
+
+    @Slot()
+    def delete_selected(self):
+        logger.debug("delete_selected()")
+        indexes = self.selection_model.selectedIndexes()
+        if not indexes:
+            logger.warning("Nothing to delete")
+            return
+        to_delete = []
+        for index in indexes:
+            item = self.model.itemFromIndex(index)
+            deleted = self.scratchpad.delete_item(item.data())
+        self.get_items()
 
     def import_urls(self, urls):
         for url in urls:

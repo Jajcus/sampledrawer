@@ -67,6 +67,34 @@ class Scratchpad:
             return self.library.get_library_object_path(tmp_metadata)
         return local_path
 
+    def delete_item(self, metadata):
+        path = metadata.path
+        if os.path.isabs(path):
+            return False
+        with self.library.db:
+            cur = self.library.db.cursor()
+            cur.execute("DELETE FROM items"
+                        " WHERE path=? AND scratchpad_id=?",
+                        (path, self.id))
+            if not cur.rowcount:
+                logger.warning("Could not remove %r from scratchpad database",
+                               path)
+            else:
+                logger.debug("Removed %r from database: %i rows",
+                             path, cur.rowcount)
+            normpath = os.path.normpath(path)
+            if normpath.startswith("/") or normpath.startswith("../"):
+                logger.warning("refusing to remove %r – not in the scratchpad",
+                               path)
+            full_path = os.path.join(self.base_path, path)
+            try:
+                os.unlink(full_path)
+                logger.debug("Removed %r", full_path)
+            except FileNotFoundError as err:
+                logger.debug("Not removed %r: %s", full_path, err)
+            except OSError as err:
+                logger.warning("Could not remove %r: %s", full_path, err)
+
     def import_file(self, metadata, copy=False, folder="", name=None):
         md5 = metadata.md5
         orig_path = metadata.path
@@ -85,8 +113,8 @@ class Scratchpad:
             cur = self.library.db.cursor()
             cur.execute("SELECT id, name, md5"
                         " FROM items"
-                        " WHERE path=?"
-                        " LIMIT 1", (path,))
+                        " WHERE path=? AND scratchpad_id=?"
+                        " LIMIT 1", (path, self.id))
             row = cur.fetchone()
             if row is not None:
                 raise ScratchpadConflictError("Already there", path, row[1])
