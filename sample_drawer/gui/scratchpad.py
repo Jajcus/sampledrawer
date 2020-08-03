@@ -2,6 +2,7 @@
 import logging
 import os
 
+from functools import partial
 from urllib.parse import urlunsplit
 
 from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QMimeData, QByteArray
@@ -123,12 +124,36 @@ class ScratchpadItems(QObject):
         self.model.clear()
         self.item_selected.emit(None)
         icon = QIcon.fromTheme("audio-x-generic")
-        for item in self.items:
+        folder_icon = QIcon.fromTheme("folder")
+        folders = {}
+        for item in sorted(self.items, key=lambda x: x.path):
+            parent_paths = []
+            path = item.path
+            while "/" in path:
+                parent_folder = path.rsplit("/", 1)[0]
+                logger.debug("%r is in a folder: %r", path, parent_folder)
+                parent = folders.get(parent_folder)
+                if parent:
+                    logger.debug("%r already here: %r", parent_folder, parent)
+                    break
+                else:
+                    parent_paths.append(parent_folder)
+                path = parent_folder
+            else:
+                logger.debug("starting at root")
+                parent = self.model.invisibleRootItem()
+            for parent_folder in reversed(parent_paths):
+                logger.debug("creating %r", parent_folder)
+                name = parent_folder.rsplit("/", 1)[-1]
+                s_item = QStandardItem(folder_icon, name)
+                parent.appendRow([s_item])
+                parent = s_item
+                folders[parent_folder] = parent
             s_item = QStandardItem(icon, item.name)
             s_item.setDragEnabled(True)
             s_item.setDropEnabled(False)
             s_item.setData(item)
-            self.model.appendRow([s_item])
+            parent.appendRow([s_item])
 
     @Slot(QItemSelection)
     def selection_changed(self, selection):
@@ -169,12 +194,25 @@ class ScratchpadItems(QObject):
                 logger.warning("Ignoring %r not a local file", url.toString())
                 continue
             path = url.path()
-            if not os.path.isfile(path):
+            if os.path.isdir(path):
+                self._import_dir(path)
+                continue
+            elif not os.path.isfile(path):
                 logger.warning("Ignoring %r not a regular file", url.toString())
                 continue
             self.file_analyzer.request_file_metadata(path,
                                                      self._import_file)
-    def _import_file(self, file_key, metadata):
+    def _import_file(self, file_key, metadata, folder=""):
         logger.debug("Got metadata for import: %r", metadata)
-        self.scratchpad.import_file(metadata)
+        self.scratchpad.import_file(metadata, folder=folder)
         self.get_items()
+    def _import_dir(self, path):
+        logger.debug("Importing dir: %r", path)
+        parent_path = os.path.dirname(path)
+        for dirpath, dirnames, filenames in os.walk(path):
+            folder = os.path.relpath(dirpath, parent_path)
+            logger.debug("Target folder: %r", folder)
+            for filename in filenames:
+                full_path = os.path.join(dirpath, filename)
+                importer = partial(self._import_file, folder=folder)
+                self.file_analyzer.request_file_metadata(full_path, importer)
