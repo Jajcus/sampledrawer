@@ -96,6 +96,12 @@ class ItemModel(QStandardItemModel):
             return True
         return False
 
+
+class ScratchpadFolder:
+    def __init__(self, path, expanded=False):
+        self.path = path
+        self.expanded = expanded
+
 class ScratchpadItems(QObject):
     item_selected = Signal(object)
     def __init__(self, app, window, file_analyzer):
@@ -106,6 +112,7 @@ class ScratchpadItems(QObject):
         self.file_analyzer = file_analyzer
         self.view = window.scratchpad_items
         self.items = []
+        self.folders = {}
         self.model = ItemModel(self)
         self.model.setColumnCount(1)
         self.view.setHeaderHidden(False)
@@ -116,16 +123,22 @@ class ScratchpadItems(QObject):
         self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.selection_model = self.view.selectionModel()
         self.selection_model.selectionChanged.connect(self.selection_changed)
+        self.view.expanded.connect(self.folder_expanded)
+        self.view.collapsed.connect(self.folder_collapsed)
         self.get_items()
         shortcut = QShortcut(QKeySequence(Qt.Key_Delete), self.view)
         shortcut.activated.connect(self.delete_selected)
 
     def reload(self):
+        expanded = {key for key, s_item
+                    in self.folders.items()
+                    if s_item.data().expanded}
         self.model.clear()
         self.item_selected.emit(None)
         icon = QIcon.fromTheme("audio-x-generic")
         folder_icon = QIcon.fromTheme("folder")
         folders = {}
+        self.folders = folders
         for item in sorted(self.items, key=lambda x: x.path):
             parent_paths = []
             path = item.path
@@ -142,18 +155,43 @@ class ScratchpadItems(QObject):
             else:
                 logger.debug("starting at root")
                 parent = self.model.invisibleRootItem()
-            for parent_folder in reversed(parent_paths):
-                logger.debug("creating %r", parent_folder)
-                name = parent_folder.rsplit("/", 1)[-1]
+            for folder in reversed(parent_paths):
+                logger.debug("creating %r", folder)
+                name = folder.rsplit("/", 1)[-1]
                 s_item = QStandardItem(folder_icon, name)
+                folder_o = ScratchpadFolder(folder)
+                s_item.setData(folder_o)
                 parent.appendRow([s_item])
                 parent = s_item
-                folders[parent_folder] = parent
+                folders[folder] = s_item
             s_item = QStandardItem(icon, item.name)
             s_item.setDragEnabled(True)
             s_item.setDropEnabled(False)
             s_item.setData(item)
             parent.appendRow([s_item])
+        for path in expanded:
+            s_item = folders.get(path)
+            if not s_item:
+                continue
+            self.view.expand(s_item.index())
+
+    @Slot()
+    def folder_expanded(self, index):
+        s_item = self.model.itemFromIndex(index)
+        folder = s_item.data()
+        if not isinstance(folder, ScratchpadFolder):
+            logger.debug("expanded item is not a folder")
+            return
+        folder.expanded = True
+
+    @Slot()
+    def folder_collapsed(self, index):
+        s_item = self.model.itemFromIndex(index)
+        folder = s_item.data()
+        if not isinstance(folder, ScratchpadFolder):
+            logger.debug("collapsed item is not a folder")
+            return
+        folder.expanded = False
 
     @Slot(QItemSelection)
     def selection_changed(self, selection):
