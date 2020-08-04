@@ -10,7 +10,7 @@ from PySide2.QtWidgets import QAbstractItemView, QCompleter, QShortcut
 from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem, QKeySequence
 
 from ..search import SearchQuery, CompletionQuery
-from .lib_items import MIMETYPES
+from .lib_items import MIMETYPES, ItemMimeData
 
 logger = logging.getLogger("gui.scratchpad")
 
@@ -82,6 +82,9 @@ class ItemModel(QStandardItemModel):
         if action != Qt.CopyAction:
             logger.debug("Not a copy - rejecting")
             return False
+        if isinstance(data, ItemMimeData):
+            logger.debug("local library item drop, accepting")
+            return True
         logger.debug("offered formats: %r", data.formats())
         if "text/uri-list" in data.formats():
             return True
@@ -91,8 +94,32 @@ class ItemModel(QStandardItemModel):
             logger.debug("Not a copy - rejecting")
             return False
         logger.debug("offered formats: %r", data.formats())
+        if parent.isValid():
+            parent_item = self.itemFromIndex(parent)
+            logger.debug("parent item: %r", parent_item)
+            s_item = parent_item.child(row, 0)
+            parent_data = parent_item.data()
+        else:
+            parent_item = None
+            parent_data = None
+        s_item = self.item(row, 0)
+        if s_item:
+            item_data = s_item.data()
+        else:
+            item_data = None
+        if isinstance(item_data, ScratchpadFolder):
+            logger.debug("Dropping at a folder")
+            folder = item_data.path
+        elif isinstance(parent_data, ScratchpadFolder):
+            logger.debug("Dropping at an item in a folder")
+            folder = parent_data.path
+        else:
+            folder = ""
+        if isinstance(data, ItemMimeData):
+            self._scratchpad_items.import_lib_items(data.get_items(), folder)
+            return True
         if "text/uri-list" in data.formats():
-            self._scratchpad_items.import_urls(data.urls())
+            self._scratchpad_items.import_urls(data.urls(), folder)
             return True
         return False
 
@@ -222,7 +249,7 @@ class ScratchpadItems(QObject):
             deleted = self.scratchpad.delete_item(item.data())
         self.get_items()
 
-    def import_urls(self, urls):
+    def import_urls(self, urls, folder=""):
         for url in urls:
             if not url.isLocalFile():
                 logger.warning("Ignoring %r not a file", url.toString())
@@ -233,24 +260,32 @@ class ScratchpadItems(QObject):
                 continue
             path = url.path()
             if os.path.isdir(path):
-                self._import_dir(path)
+                self._import_dir(path, folder=folder)
                 continue
             elif not os.path.isfile(path):
                 logger.warning("Ignoring %r not a regular file", url.toString())
                 continue
-            self.file_analyzer.request_file_metadata(path,
-                                                     self._import_file)
+            callback = partial(self._import_file, folder=folder)
+            self.file_analyzer.request_file_metadata(path, callback)
     def _import_file(self, file_key, metadata, folder=""):
         logger.debug("Got metadata for import: %r", metadata)
         self.scratchpad.import_file(metadata, folder=folder)
         self.get_items()
-    def _import_dir(self, path):
+    def _import_dir(self, path, parent_folder=""):
         logger.debug("Importing dir: %r", path)
         parent_path = os.path.dirname(path)
         for dirpath, dirnames, filenames in os.walk(path):
             folder = os.path.relpath(dirpath, parent_path)
+            if os.sep != "/":
+                folder.replace(os.sep, "/")
+            if parent_folder:
+                folder = "/".join((parent_folder, folder))
             logger.debug("Target folder: %r", folder)
             for filename in filenames:
                 full_path = os.path.join(dirpath, filename)
                 importer = partial(self._import_file, folder=folder)
                 self.file_analyzer.request_file_metadata(full_path, importer)
+    def import_lib_items(self, items, folder=""):
+        for metadata in items:
+            self.scratchpad.import_item(metadata, folder=folder)
+        self.get_items()

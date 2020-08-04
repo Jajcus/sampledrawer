@@ -96,80 +96,99 @@ class Scratchpad:
                 logger.warning("Could not remove %r: %s", full_path, err)
 
     def import_file(self, metadata, copy=False, folder="", name=None):
-        md5 = metadata.md5
         orig_path = metadata.path
-        if not md5 or not orig_path:
+        if not metadata.md5 or not orig_path:
             raise ValueError("md5 and path are required for file import")
         if name is None:
             name = metadata.name
             if not metadata.name:
                 name = os.path.basename(orig_path).rsplit(".", 1)[0]
+        source = "file:{}".format(orig_path)
+        with self.library.db:
+            path = self._import_item(source, metadata, folder, name)
+            if copy:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                shutil.copy(orig_path, path)
+
+    def import_item(self, metadata, copy=False, folder="", name=None):
+        if not metadata.md5:
+            raise ValueError("md5 is required for lib item import")
+        if name is None:
+            name = metadata.name
+            if not metadata.name:
+                name = os.path.basename(orig_path).rsplit(".", 1)[0]
+        source = "lib:{}".format(metadata.md5)
+        with self.library.db:
+            path = self._import_item(source, metadata, folder, name)
+            if copy:
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                shutil.copy(self.library.get_library_object_path(metadata),
+                            path)
+
+    def _import_item(self, source, metadata, folder="", name=None):
+        md5 = metadata.md5
         if metadata.format:
             filename = "{}.{}".format(name, metadata.format.lower())
         else:
             filename = "{}.bin".format(name)
         path = os.path.join(folder, filename)
-        with self.library.db:
-            cur = self.library.db.cursor()
-            cur.execute("SELECT id, name, md5"
-                        " FROM items"
-                        " WHERE path=? AND scratchpad_id=?"
-                        " LIMIT 1", (path, self.id))
+        cur = self.library.db.cursor()
+        cur.execute("SELECT id, name, md5"
+                    " FROM items"
+                    " WHERE path=? AND scratchpad_id=?"
+                    " LIMIT 1", (path, self.id))
+        row = cur.fetchone()
+        if row is not None:
+            raise ScratchpadConflictError("Already there", path, row[1])
+        metadata = metadata.copy()
+        metadata.path = path
+        metadata.name = name
+        metadata.source = source
+        query = "INSERT INTO items(scratchpad_id,{}) VALUES ({})".format(
+                ", ".join(mdtype.name for mdtype in FIXED_METADATA),
+                ", ".join(["?"] * (len(FIXED_METADATA) + 1)))
+        values = [self.id] + [getattr(metadata, mdtype.name)
+                              for mdtype in FIXED_METADATA]
+        logging.debug("running: %r with %r", query, values)
+        cur.execute(query, values)
+        item_id = cur.lastrowid
+        logging.debug("item inserted with id: %r", item_id)
+        tags = metadata.get_tags()
+
+        # add missing parent tags
+        # as  /a/b/c implies /a/b and /a
+        for tag in list(tags):
+            if tag.startswith("/"):
+                parent = tag.rsplit("/", 1)[0]
+                while parent:
+                    tags.add(parent)
+                    parent = parent.rsplit("/", 1)[0]
+
+        for tag in tags:
+            cur.execute("SELECT id FROM tags WHERE name=?", (tag,))
             row = cur.fetchone()
-            if row is not None:
-                raise ScratchpadConflictError("Already there", path, row[1])
-            metadata = metadata.copy()
-            metadata.path = path
-            metadata.name = name
-            metadata.source = "file:{}".format(orig_path)
-            query = "INSERT INTO items(scratchpad_id,{}) VALUES ({})".format(
-                    ", ".join(mdtype.name for mdtype in FIXED_METADATA),
-                    ", ".join(["?"] * (len(FIXED_METADATA) + 1)))
-            values = [self.id] + [getattr(metadata, mdtype.name)
-                                  for mdtype in FIXED_METADATA]
-            logging.debug("running: %r with %r", query, values)
-            cur.execute(query, values)
-            item_id = cur.lastrowid
-            logging.debug("item inserted with id: %r", item_id)
-            tags = metadata.get_tags()
+            if row:
+                tag_id = row[0]
+            else:
+                cur.execute("INSERT INTO tags(name) VALUES(?)", (tag,))
+                tag_id = cur.lastrowid
+            cur.execute("INSERT INTO item_tags(item_id, tag_id)"
+                            " VALUES(?, ?)", (item_id, tag_id))
 
-            # add missing parent tags
-            # as  /a/b/c implies /a/b and /a
-            for tag in list(tags):
-                if tag.startswith("/"):
-                    parent = tag.rsplit("/", 1)[0]
-                    while parent:
-                        tags.add(parent)
-                        parent = parent.rsplit("/", 1)[0]
+        for key in metadata:
+            if key.startswith("_"):
+                continue
+            value = metadata[key]
+            cur.execute("SELECT id FROM custom_keys WHERE name=?", (key,))
+            row = cur.fetchone()
+            if row:
+                key_id = row[0]
+            else:
+                cur.execute("INSERT INTO custom_keys(name) VALUES(?)", (key,))
+                key_id = cur.lastrowid
+            cur.execute("INSERT INTO item_custom_values(item_id, key_id, value)"
+                            " VALUES(?, ?, ?)", (item_id, key_id, value))
 
-            for tag in tags:
-                cur.execute("SELECT id FROM tags WHERE name=?", (tag,))
-                row = cur.fetchone()
-                if row:
-                    tag_id = row[0]
-                else:
-                    cur.execute("INSERT INTO tags(name) VALUES(?)", (tag,))
-                    tag_id = cur.lastrowid
-                cur.execute("INSERT INTO item_tags(item_id, tag_id)"
-                                " VALUES(?, ?)", (item_id, tag_id))
-
-            for key in metadata:
-                if key.startswith("_"):
-                    continue
-                value = metadata[key]
-                cur.execute("SELECT id FROM custom_keys WHERE name=?", (key,))
-                row = cur.fetchone()
-                if row:
-                    key_id = row[0]
-                else:
-                    cur.execute("INSERT INTO custom_keys(name) VALUES(?)", (key,))
-                    key_id = cur.lastrowid
-                cur.execute("INSERT INTO item_custom_values(item_id, key_id, value)"
-                                " VALUES(?, ?, ?)", (item_id, key_id, value))
-
-            if copy:
-                os.makedirs(os.path.dirname(path), exist_ok=True)
-                shutil.copy(orig_path, path)
 
     def get_items(self):
         query = SearchQuery([])

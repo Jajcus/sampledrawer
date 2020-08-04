@@ -30,6 +30,8 @@ class ItemMimeData(QMimeData):
         self._items = [item.data() for item in items]
         self._paths = None
         self._formats = None
+    def get_items(self):
+        return self._items
     def formats(self):
         if self._formats is not None:
             return self._formats
