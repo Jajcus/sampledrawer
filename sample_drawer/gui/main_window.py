@@ -79,7 +79,11 @@ class MainWindow:
         self.sample_player.file_selected(path)
 
     @Slot()
-    def sp_item_selected(self, metadata):
+    def sp_item_selected(self, item):
+        if isinstance(item, Metadata):
+            metadata = item
+        else:
+            metadata = None
         logger.debug("scratchpad item selected: %r", metadata)
         if metadata:
             path = self.app.scratchpad.get_object_path(metadata)
