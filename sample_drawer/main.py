@@ -9,6 +9,7 @@ import appdirs
 
 from .gui.app import GUIApplication
 from .library import Library, LibraryConflictError
+from .library_verifier import LibraryVerifier
 from .scratchpad import Scratchpad
 from .file_analyzer import FileAnalyzer
 from .metadata import FIXED_METADATA_D, FIXED_METADATA_KEYS, VALID_KEY_RE
@@ -83,11 +84,61 @@ class Application:
                             help='Set custom metadata')
         parser.add_argument('--scratchpad', default="main",
                             help='Select scratchpad to use')
+        parser.add_argument('--check-db', action="store_true",
+                            help='Verify library database consistency')
         self.args = parser.parse_args()
 
     def setup_logging(self):
         logging.basicConfig(level=self.args.debug_level,
                             format=LOG_FORMAT)
+
+    def check_db(self):
+        verifier = LibraryVerifier(self.library)
+        last_stage = 0
+        last_percent = -10
+        errors = 0
+        for progress in verifier.verify():
+            logger.debug("verify progress: %r", progress)
+            stage = progress.stage
+            if stage != last_stage:
+                logger.info("=== [%i/%i] %s ===", stage, progress.stages,
+                            progress.stage_name)
+            last_stage = stage
+            percent = progress.stage_percent
+            if (percent - last_percent) > 10 and (
+                    percent != 100 or last_percent > 0):
+                # show percent change only if it didn't go to 100% immediately
+                logger.info("%3i%%%s", percent, "..." if percent < 100 else "")
+                last_percent = percent
+            if progress.error:
+                logger.error("%s", progress.error)
+                errors += 1
+            question = progress.question
+            if question:
+                keys = question.get_option_keys()
+                prompt = "{} [{}] ".format(question.question, "/".join(keys))
+                while True:
+                    answer = input(prompt)
+                    if not answer:
+                        if question.default:
+                            answer = question.default
+                        else:
+                            continue
+                    elif answer in question.options:
+                        break
+                    elif answer in question.save_options:
+                        break
+                    else:
+                        try:
+                            answer = keys[answer]
+                            break
+                        except KeyError:
+                            continue
+                question.answer(answer)
+        if errors:
+            return 1
+        else:
+            return 0
 
     def import_file(self, metadata_rules, path, root):
         try:
@@ -130,6 +181,8 @@ class Application:
     def start(self):
         if self.args.import_files:
             return self.import_files()
+        elif self.args.check_db:
+            return self.check_db()
         else:
             self.gui = GUIApplication(self)
             try:
