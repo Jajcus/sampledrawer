@@ -54,6 +54,7 @@ class FileAnalyzer:
 
     def get_file_info(self, path):
         file_info = { "path": str(path) }
+        logger.debug("Analyzing %r...", path)
         with open(str(path), "rb") as source_file:
             with SoundFile(source_file) as snd_file:
                 samplerate = snd_file.samplerate

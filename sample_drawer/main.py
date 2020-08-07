@@ -93,7 +93,7 @@ class Application:
                             format=LOG_FORMAT)
 
     def check_db(self):
-        verifier = LibraryVerifier(self.library)
+        verifier = LibraryVerifier(self)
         last_stage = 0
         last_percent = -10
         errors = 0
@@ -103,6 +103,7 @@ class Application:
             if stage != last_stage:
                 logger.info("=== [%i/%i] %s ===", stage, progress.stages,
                             progress.stage_name)
+                last_percent = -10
             last_stage = stage
             percent = progress.stage_percent
             if (percent - last_percent) > 10 and (
@@ -115,7 +116,13 @@ class Application:
                 errors += 1
             question = progress.question
             if question:
-                keys = question.get_option_keys()
+                options = []
+                keys = []
+                for key, option in question.keys.items():
+                    if options == question.default:
+                        keys.append(key.upper())
+                    else:
+                        keys.append(key)
                 prompt = "{} [{}] ".format(question.question, "/".join(keys))
                 while True:
                     answer = input(prompt)
@@ -124,13 +131,11 @@ class Application:
                             answer = question.default
                         else:
                             continue
-                    elif answer in question.options:
-                        break
-                    elif answer in question.save_options:
+                    elif answer in question.all_options:
                         break
                     else:
                         try:
-                            answer = keys[answer]
+                            answer = question.keys[answer]
                             break
                         except KeyError:
                             continue
