@@ -4,7 +4,7 @@ import logging
 
 from functools import partial
 
-from PySide2.QtCore import QObject, Slot, Signal, QRunnable, QThreadPool
+from PySide2.QtCore import QObject, Signal, QRunnable, QThreadPool
 
 from ..lru_cache import LRUCache
 from ..file_analyzer import FileAnalyzer, FileKey
@@ -20,19 +20,18 @@ class FileAnalyzerWorker(QRunnable, FileAnalyzer):
         self.path = path
         self.signals = self.Signals()
 
-    @Slot()
     def run(self):
         """
         Gather sample meta-data in the background.
         """
-        logger.debug("Thread start")
+        logger.debug("Thread start for %r", self.path)
         try:
             file_info = self.get_file_info(self.path)
             self.signals.finished.emit(file_info)
         except (IOError, RuntimeError) as err:
             logger.error("Cannot load %r: %s", str(self.path), err)
             self.signals.error.emit(err)
-        logger.debug("Thread complete")
+        logger.debug("Thread complete for %r", self.path)
 
     class Signals(QObject):
         finished = Signal(dict)
@@ -71,7 +70,10 @@ class AsyncFileAnalyzer(QObject):
             callback(file_key, metadata)
             return
         def our_callback(path, file_info):
-            metadata = Metadata.from_file_info(file_info)
+            if file_info:
+                metadata = Metadata.from_file_info(file_info)
+            else:
+                metadata = None
             callback(path, metadata)
         self._request_info(path, callback=our_callback)
 
@@ -83,10 +85,12 @@ class AsyncFileAnalyzer(QObject):
             waiting_list.append(callback)
         else:
             worker = FileAnalyzerWorker(file_key)
-            self.threadpool.start(worker)
             our_callback = partial(self._file_info_received, file_key)
+            our_error_callback = partial(self._file_info_error, file_key)
             self._waiting_for_info[file_key] = [callback]
-            worker.signals.finished.connect(Slot()(our_callback))
+            worker.signals.finished.connect(our_callback)
+            worker.signals.error.connect(our_error_callback)
+            self.threadpool.start(worker)
 
     def _file_info_received(self, file_key, file_info):
         logger.debug("file_info_received for %r called with %r", file_key, file_info)
@@ -94,6 +98,12 @@ class AsyncFileAnalyzer(QObject):
         callbacks = self._waiting_for_info.pop(file_key)
         for callback in callbacks:
             callback(file_key, file_info)
+
+    def _file_info_error(self, file_key, err):
+        logger.debug("file_info_error for %r called with %r", file_key, err)
+        callbacks = self._waiting_for_info.pop(file_key)
+        for callback in callbacks:
+            callback(file_key, None)
 
     def get_file_info(self, path):
         if not isinstance(path, FileKey):
