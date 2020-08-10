@@ -6,6 +6,8 @@ import signal
 from PySide2.QtCore import QObject, QTimer, Slot, QSocketNotifier
 from PySide2.QtWidgets import QApplication
 
+logger = logging.getLogger("signal_handler")
+
 # Hack from: https://stackoverflow.com/questions/35305920/pyqt-core-application-doesnt-return-to-caller-on-quit
 # should really be properly implemented in Qt itself
 class SignalHandler(QObject):
@@ -79,8 +81,9 @@ class SignalHandler(QObject):
             logging.exception("Failed to read wakeup fd.")
         self._notifier.setEnabled(True)
 
-    def interrupt(self, signum, _frame):
+    def interrupt(self, signum, frame):
         """Handler for signals to gracefully shutdown (SIGINT/SIGTERM)."""
-        logging.info("Signal %i received", signum)
+        logger.info("Signal %i received", signum)
+        logger.debug("stack:", stack_info=frame)
         QApplication.quit()
 

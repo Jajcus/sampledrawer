@@ -91,6 +91,40 @@ class ItemModel(QStandardItemModel):
         return ItemMimeData(self._app, items)
     def supportedDragActions(self):
         return Qt.CopyAction
+    def supportedDropActions(self):
+        return Qt.CopyAction
+    def canDropMimeData(self, data, action, row, column, parent):
+        logger.debug("canDropMimeData%r", (data, action, row, column, parent))
+        if action != Qt.CopyAction:
+            logger.debug("Not a copy - rejecting")
+            return False
+        if isinstance(data, ItemMimeData):
+            logger.debug("local library item drop, rejecting")
+            return False
+        logger.debug("offered formats: %r", data.formats())
+        if "text/uri-list" in data.formats():
+            return True
+        return False
+    def dropMimeData(self, data, action, row, column, parent):
+        if action != Qt.CopyAction:
+            logger.debug("Not a copy - rejecting")
+            return False
+        logger.debug("offered formats: %r", data.formats())
+        if "text/uri-list" in data.formats():
+            paths = []
+            for url in data.urls():
+                if not url.isLocalFile():
+                    logger.warning("Ignoring %r not a file", url.toString())
+                    continue
+                if (url.host() and url.host() != "localhost"
+                        and url.host() != socket.gethostname()):
+                    logger.warning("Ignoring %r not a local file", url.toString())
+                    continue
+                path = url.path()
+                paths.append(path)
+            self._app.main_window.import_files(paths)
+            return True
+        return False
 
 class LibraryItems(QObject):
     item_selected = Signal(object)
@@ -116,9 +150,8 @@ class LibraryItems(QObject):
         self.view.setIndentation(0)
         self.view.setModel(self.model)
         self.view.sortByColumn(0, Qt.AscendingOrder)
-        #self.view.setDragDropMode(QAbstractItemView.DragOnly | QAbstractItemView.InternalMove)
-        self.view.setDragDropMode(QAbstractItemView.InternalMove)
         self.view.setDragEnabled(True)
+        self.view.setAcceptDrops(True)
         self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         selection_model = self.view.selectionModel()
         selection_model.selectionChanged.connect(self.selection_changed)

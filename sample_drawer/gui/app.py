@@ -20,6 +20,7 @@ class GUIApplication:
     def __init__(self, app):
         self.app = app
         self.args = app.args
+        self.config = app.config
         self.library = app.library
         self.scratchpad = app.scratchpad
         self.analyzer = app.analyzer

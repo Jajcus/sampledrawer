@@ -13,16 +13,12 @@ from .library_verifier import LibraryVerifier
 from .scratchpad import Scratchpad
 from .file_analyzer import FileAnalyzer
 from .metadata import FIXED_METADATA_D, FIXED_METADATA_KEYS, VALID_KEY_RE
+from .config import Config
 
 APP_NAME = "sampledrawer"
 APP_AUTHOR = "Jajcus"
 
-DEFAULT_IMPORT_RULES = [
-        ("_path", r"^(.*/)?([^/]*?)(\.[^/.]*)?$", {"_name": "{2}"}),
-        ("_auto_category", r"^/.*$", {"_tags": "{_tags} {0}"}),
-        ]
-
-LOG_FORMAT = "%(asctime)-15s %(message)s"
+LOG_FORMAT = "%(asctime)-15s %(thread)d %(message)s"
 
 logger = logging.getLogger("main")
 
@@ -55,6 +51,7 @@ class Application:
         self.parse_args()
         self.setup_logging()
 
+        self.config = Config()
         self.analyzer = FileAnalyzer()
         self.library = Library(self)
         self.scratchpad = Scratchpad(self, self.library, self.args.scratchpad)
@@ -176,7 +173,9 @@ class Application:
                 logger.info("Importing %r", file_path)
                 self.import_file(metadata_rules, file_path, root)
 
-    def import_files(self, metadata_rules=DEFAULT_IMPORT_RULES):
+    def import_files(self, metadata_rules=None):
+        if metadata_rules is None:
+            metadata_rules = self.config["rewrite_rules"]["default"]["rules"]
         for path in self.args.import_files:
             if os.path.isdir(path):
                 self.import_dir(metadata_rules, path)

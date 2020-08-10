@@ -14,6 +14,7 @@ from .file_analyzer import AsyncFileAnalyzer, FileKey
 from .metadata_browser import MetadataBrowser
 from .waveform import WaveformWidget, WaveformCursorWidget
 from .scratchpad import ScratchpadItems
+from .import_dialog import ImportDialog
 
 from . import __path__ as PKG_PATH
 
@@ -110,4 +111,26 @@ class MainWindow:
         logger.debug("Got %r metadata: %r", path, metadata)
         self.metadata_browser.set_metadata(metadata)
         self.window.waveform.set_duration(metadata.duration)
+
+    def import_files(self, paths):
+        dialog = ImportDialog(self)
+        if len(paths) == 1 and os.path.isdir(paths[0]):
+            root = os.path.dirname(paths[0])
+        else:
+            root = os.path.commonprefix(paths).rsplit(os.sep, 1)[0]
+        file_paths = []
+        for path in paths:
+            if os.path.isdir(path):
+                for dirpath, dirnames, filenames in os.walk(path):
+                    for filename in filenames:
+                        file_paths.append(os.path.join(dirpath, filename))
+            elif os.path.isfile(path):
+                file_paths.append(path)
+            else:
+                logger.warning("Cannot import %r: is not a regular file", path)
+        if file_paths:
+            dialog.load_files(file_paths, root)
+            self.lib_tree.reload()
+        else:
+            logger.warning("Nothing to import")
 
