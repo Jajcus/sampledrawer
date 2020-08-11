@@ -43,10 +43,13 @@ class FileKey:
         else:
             return hash(self.path)
     def __eq__(self, other):
-        return (self.path == other.path
-                and self.stat
-                and self.stat.st_size == other.stat.st_size
-                and self.stat.st_mtime == other.stat.st_mtime)
+        if isinstance(other, FileKey):
+            return (self.path == other.path
+                    and self.stat
+                    and self.stat.st_size == other.stat.st_size
+                    and self.stat.st_mtime == other.stat.st_mtime)
+        else:
+            return self.path == other
 
 class FileAnalyzer:
     def __init__(self):
