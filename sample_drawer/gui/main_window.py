@@ -3,6 +3,7 @@ import logging
 import os
 
 from PySide2.QtCore import QFile, Slot
+from PySide2.QtGui import QPalette
 from PySide2.QtUiTools import QUiLoader
 
 from .file_browser import FileBrowser
@@ -22,6 +23,18 @@ logger = logging.getLogger("main_window")
 
 UI_FILENAME = os.path.join(PKG_PATH[0], "main_window.ui")
 
+STYLESHEET = """
+QTreeView:!active {{
+    selection-background-color: {inactive_hl_color};
+    }}
+"""
+
+def color_to_qss(color):
+    return "rgb({}, {}, {}, {})".format(color.red(),
+                                        color.green(),
+                                        color.blue(),
+                                        color.alpha())
+
 class UiLoader(QUiLoader):
     def createWidget(self, className, parent=None, name=""):
         if className == "WaveformWidget":
@@ -37,6 +50,7 @@ class MainWindow:
         ui_file.open(QFile.ReadOnly)
         loader = UiLoader()
         self.window = loader.load(ui_file)
+        self.set_stylesheet()
         self.file_browser = FileBrowser(app, self.window)
         self.lib_tree = LibraryTree(app, self.window)
         self.lib_items = LibraryItems(app, self.window, self.lib_tree)
@@ -49,6 +63,27 @@ class MainWindow:
         self.lib_items.item_selected.connect(self.item_selected)
         self.workplace_items.item_selected.connect(self.wp_item_selected)
         self.current_file = None
+
+    def set_stylesheet(self):
+        palette = self.window.palette()
+        hl_color = palette.color(QPalette.Active, QPalette.Highlight)
+        hl_text_color = palette.color(QPalette.Active, QPalette.HighlightedText)
+
+        if hl_color.lightnessF() < hl_text_color.lightnessF():
+            inactive_hl_color = hl_color.lighter()
+        else:
+            inactive_hl_color = hl_color.darker()
+
+        hue, sat, lig, alpha = inactive_hl_color.getHslF()
+        inactive_hl_color.setHslF(hue, sat / 2, lig, alpha)
+
+        params = {
+                "active_hl_color":  color_to_qss(hl_color),
+                "inactive_hl_color":  color_to_qss(inactive_hl_color),
+                }
+        stylesheet = STYLESHEET.format(**params)
+        logger.debug("custom style: %r", stylesheet)
+        self.window.setStyleSheet(stylesheet)
 
     def show(self):
         self.window.show()
