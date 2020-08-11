@@ -54,6 +54,7 @@ class FileBrowser(QObject):
         self.view.setExpanded(index, True)
         self.view.setCurrentIndex(index)
         self.view.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
+        self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.add_name_filters()
         self.apply_show_hidden()
         self.apply_name_filters()
