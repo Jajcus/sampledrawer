@@ -12,9 +12,9 @@ from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem, QKeySequence
 from ..search import SearchQuery, CompletionQuery
 from .lib_items import MIMETYPES, ItemMimeData
 
-logger = logging.getLogger("gui.scratchpad")
+logger = logging.getLogger("gui.workplace")
 
-class ScratchpadItemMimeData(QMimeData):
+class WorkplaceItemMimeData(QMimeData):
     def __init__(self, app, items):
         QMimeData.__init__(self)
         self._app = app
@@ -45,7 +45,7 @@ class ScratchpadItemMimeData(QMimeData):
         if paths is None:
             paths = []
             for item in self._items:
-                path = self._app.scratchpad.get_object_path(item)
+                path = self._app.workplace.get_object_path(item)
                 paths.append(path)
             self._paths = paths
 
@@ -65,14 +65,14 @@ class ScratchpadItemMimeData(QMimeData):
             return QByteArray.fromRawData(data)
 
 class ItemModel(QStandardItemModel):
-    def __init__(self, scratchpad_items):
+    def __init__(self, workplace_items):
         QStandardItemModel.__init__(self)
-        self._scratchpad_items = scratchpad_items
-        self._app = scratchpad_items.app
+        self._workplace_items = workplace_items
+        self._app = workplace_items.app
     def mimeData(self, indexes):
         logger.debug("mimeData(%r)", indexes)
         items = [ self.itemFromIndex(index) for index in indexes ]
-        return ScratchpadItemMimeData(self._app, items)
+        return WorkplaceItemMimeData(self._app, items)
     def supportedDragActions(self):
         return Qt.CopyAction
     def supportedDropActions(self):
@@ -107,37 +107,37 @@ class ItemModel(QStandardItemModel):
             item_data = s_item.data()
         else:
             item_data = None
-        if isinstance(item_data, ScratchpadFolder):
+        if isinstance(item_data, WorkplaceFolder):
             logger.debug("Dropping at a folder")
             folder = item_data.path
-        elif isinstance(parent_data, ScratchpadFolder):
+        elif isinstance(parent_data, WorkplaceFolder):
             logger.debug("Dropping at an item in a folder")
             folder = parent_data.path
         else:
             folder = ""
         if isinstance(data, ItemMimeData):
-            self._scratchpad_items.import_lib_items(data.get_items(), folder)
+            self._workplace_items.import_lib_items(data.get_items(), folder)
             return True
         if "text/uri-list" in data.formats():
-            self._scratchpad_items.import_urls(data.urls(), folder)
+            self._workplace_items.import_urls(data.urls(), folder)
             return True
         return False
 
 
-class ScratchpadFolder:
+class WorkplaceFolder:
     def __init__(self, path, expanded=False):
         self.path = path
         self.expanded = expanded
 
-class ScratchpadItems(QObject):
+class WorkplaceItems(QObject):
     item_selected = Signal(object)
     def __init__(self, app, window, file_analyzer):
         QObject.__init__(self)
         self.app = app
         self.library = app.library
-        self.scratchpad = app.scratchpad
+        self.workplace = app.workplace
         self.file_analyzer = file_analyzer
-        self.view = window.scratchpad_items
+        self.view = window.workplace_items
         self.items = []
         self.folders = {}
         self.model = ItemModel(self)
@@ -186,7 +186,7 @@ class ScratchpadItems(QObject):
                 logger.debug("creating %r", folder)
                 name = folder.rsplit("/", 1)[-1]
                 s_item = QStandardItem(folder_icon, name)
-                folder_o = ScratchpadFolder(folder)
+                folder_o = WorkplaceFolder(folder)
                 s_item.setData(folder_o)
                 parent.appendRow([s_item])
                 parent = s_item
@@ -206,7 +206,7 @@ class ScratchpadItems(QObject):
     def folder_expanded(self, index):
         s_item = self.model.itemFromIndex(index)
         folder = s_item.data()
-        if not isinstance(folder, ScratchpadFolder):
+        if not isinstance(folder, WorkplaceFolder):
             logger.debug("expanded item is not a folder")
             return
         folder.expanded = True
@@ -215,7 +215,7 @@ class ScratchpadItems(QObject):
     def folder_collapsed(self, index):
         s_item = self.model.itemFromIndex(index)
         folder = s_item.data()
-        if not isinstance(folder, ScratchpadFolder):
+        if not isinstance(folder, WorkplaceFolder):
             logger.debug("collapsed item is not a folder")
             return
         folder.expanded = False
@@ -233,7 +233,7 @@ class ScratchpadItems(QObject):
         self.item_selected.emit(metadata)
 
     def get_items(self):
-        self.items = self.scratchpad.get_items()
+        self.items = self.workplace.get_items()
         self.reload()
 
     @Slot()
@@ -246,7 +246,7 @@ class ScratchpadItems(QObject):
         to_delete = []
         for index in indexes:
             item = self.model.itemFromIndex(index)
-            deleted = self.scratchpad.delete_item(item.data())
+            deleted = self.workplace.delete_item(item.data())
         self.get_items()
 
     def import_urls(self, urls, folder=""):
@@ -269,7 +269,7 @@ class ScratchpadItems(QObject):
             self.file_analyzer.request_file_metadata(path, callback)
     def _import_file(self, file_key, metadata, folder=""):
         logger.debug("Got metadata for import: %r", metadata)
-        self.scratchpad.import_file(metadata, folder=folder)
+        self.workplace.import_file(metadata, folder=folder)
         self.get_items()
     def _import_dir(self, path, parent_folder=""):
         logger.debug("Importing dir: %r", path)
@@ -287,5 +287,5 @@ class ScratchpadItems(QObject):
                 self.file_analyzer.request_file_metadata(full_path, importer)
     def import_lib_items(self, items, folder=""):
         for metadata in items:
-            self.scratchpad.import_item(metadata, folder=folder)
+            self.workplace.import_item(metadata, folder=folder)
         self.get_items()

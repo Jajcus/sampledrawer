@@ -136,7 +136,7 @@ class ImportDialog:
             self.loading = False
             self.enable_disable_ok()
 
-    def load_scratchpad_items(self, items, root="/"):
+    def load_workplace_items(self, items, root="/"):
         self.window.show()
 
     def update_preview(self):

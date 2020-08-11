@@ -13,7 +13,7 @@ from ..metadata import Metadata
 from .file_analyzer import AsyncFileAnalyzer, FileKey
 from .metadata_browser import MetadataBrowser
 from .waveform import WaveformWidget, WaveformCursorWidget
-from .scratchpad import ScratchpadItems
+from .workplace import WorkplaceItems
 from .import_dialog import ImportDialog
 
 from . import __path__ as PKG_PATH
@@ -42,12 +42,12 @@ class MainWindow:
         self.lib_items = LibraryItems(app, self.window, self.lib_tree)
         self.sample_player = Player(self.window)
         self.file_analyzer = AsyncFileAnalyzer()
-        self.scratchpad_items = ScratchpadItems(app, self.window, self.file_analyzer)
+        self.workplace_items = WorkplaceItems(app, self.window, self.file_analyzer)
         self.metadata_browser = MetadataBrowser(self.window.metadata_view)
         self.file_browser.file_selected.connect(self.sample_player.file_selected)
         self.file_browser.file_selected.connect(self.file_selected)
         self.lib_items.item_selected.connect(self.item_selected)
-        self.scratchpad_items.item_selected.connect(self.sp_item_selected)
+        self.workplace_items.item_selected.connect(self.wp_item_selected)
         self.current_file = None
 
     def show(self):
@@ -80,14 +80,14 @@ class MainWindow:
         self.sample_player.file_selected(path)
 
     @Slot()
-    def sp_item_selected(self, item):
+    def wp_item_selected(self, item):
         if isinstance(item, Metadata):
             metadata = item
         else:
             metadata = None
-        logger.debug("scratchpad item selected: %r", metadata)
+        logger.debug("workplace item selected: %r", metadata)
         if metadata:
-            path = self.app.scratchpad.get_object_path(metadata)
+            path = self.app.workplace.get_object_path(metadata)
             self.window.waveform.set_duration(metadata.duration)
         else:
             path = None

@@ -10,13 +10,13 @@ from collections import defaultdict
 from .metadata import FIXED_METADATA, FIXED_METADATA_D, FIXED_METADATA_KEYS, Metadata
 from .search import SearchQuery
 
-logger = logging.getLogger("scratchpad")
+logger = logging.getLogger("workplace")
 
-class ScratchpadError(Exception):
+class WorkplaceError(Exception):
     def __str__(self):
         return str(self.args[0])
 
-class ScratchpadConflictError(ScratchpadError):
+class WorkplaceConflictError(WorkplaceError):
     @property
     def path(self):
         return self.args[1]
@@ -24,7 +24,7 @@ class ScratchpadConflictError(ScratchpadError):
     def existing_name(self):
         return self.args[2]
 
-class Scratchpad:
+class Workplace:
     def __init__(self, app, library, name):
         self.tmp_dir = None
         self.id = None
@@ -32,19 +32,19 @@ class Scratchpad:
         self.app = app
         self.library = library
         self.base_path = os.path.join(app.appdirs.user_data_dir,
-                                      "scratchpads", name)
+                                      "workplaces", name)
         with self.library.db as dbconn:
             cur = dbconn.cursor()
-            cur.execute("SELECT id FROM scratchpads WHERE name=?", (name,))
+            cur.execute("SELECT id FROM workplaces WHERE name=?", (name,))
             row = cur.fetchone()
             if row is not None:
                 self.id = row[0]
-                logger.debug("Found existing scratchpad: %i", self.id)
+                logger.debug("Found existing workplace: %i", self.id)
             else:
-                cur.execute("INSERT INTO scratchpads(name) VALUES (?)",
+                cur.execute("INSERT INTO workplaces(name) VALUES (?)",
                             (name,))
                 self.id = cur.lastrowid
-                logger.debug("Creating new scratchpad: %i", self.id)
+                logger.debug("Creating new workplace: %i", self.id)
         os.makedirs(self.base_path, exist_ok=True)
 
     def get_object_path(self, metadata):
@@ -74,17 +74,17 @@ class Scratchpad:
         with self.library.db:
             cur = self.library.db.cursor()
             cur.execute("DELETE FROM items"
-                        " WHERE path=? AND scratchpad_id=?",
+                        " WHERE path=? AND workplace_id=?",
                         (path, self.id))
             if not cur.rowcount:
-                logger.warning("Could not remove %r from scratchpad database",
+                logger.warning("Could not remove %r from workplace database",
                                path)
             else:
                 logger.debug("Removed %r from database: %i rows",
                              path, cur.rowcount)
             normpath = os.path.normpath(path)
             if normpath.startswith("/") or normpath.startswith("../"):
-                logger.warning("refusing to remove %r – not in the scratchpad",
+                logger.warning("refusing to remove %r – not in the workplace",
                                path)
             full_path = os.path.join(self.base_path, path)
             try:
@@ -135,16 +135,16 @@ class Scratchpad:
         cur = self.library.db.cursor()
         cur.execute("SELECT id, name, md5"
                     " FROM items"
-                    " WHERE path=? AND scratchpad_id=?"
+                    " WHERE path=? AND workplace_id=?"
                     " LIMIT 1", (path, self.id))
         row = cur.fetchone()
         if row is not None:
-            raise ScratchpadConflictError("Already there", path, row[1])
+            raise WorkplaceConflictError("Already there", path, row[1])
         metadata = metadata.copy()
         metadata.path = path
         metadata.name = name
         metadata.source = source
-        query = "INSERT INTO items(scratchpad_id,{}) VALUES ({})".format(
+        query = "INSERT INTO items(workplace_id,{}) VALUES ({})".format(
                 ", ".join(mdtype.name for mdtype in FIXED_METADATA),
                 ", ".join(["?"] * (len(FIXED_METADATA) + 1)))
         values = [self.id] + [getattr(metadata, mdtype.name)
@@ -192,7 +192,7 @@ class Scratchpad:
 
     def get_items(self):
         query = SearchQuery([])
-        query, params = query.as_sql(scratchpad_id=self.id)
+        query, params = query.as_sql(workplace_id=self.id)
         result = []
         with self.library.db:
             cur = self.library.db.cursor()

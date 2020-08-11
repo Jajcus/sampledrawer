@@ -10,7 +10,7 @@ import appdirs
 from .gui.app import GUIApplication
 from .library import Library, LibraryConflictError
 from .library_verifier import LibraryVerifier
-from .scratchpad import Scratchpad
+from .workplace import Workplace
 from .file_analyzer import FileAnalyzer
 from .metadata import FIXED_METADATA_D, FIXED_METADATA_KEYS, VALID_KEY_RE
 from .config import Config
@@ -54,7 +54,7 @@ class Application:
         self.config = Config()
         self.analyzer = FileAnalyzer()
         self.library = Library(self)
-        self.scratchpad = Scratchpad(self, self.library, self.args.scratchpad)
+        self.workplace = Workplace(self, self.library, self.args.workplace)
 
     def parse_args(self):
         parser = argparse.ArgumentParser(description='Sample Drawer – audio sample browser and organizer.')
@@ -79,8 +79,8 @@ class Application:
         parser.add_argument('--set', action="append", dest='metadata',
                             metavar='KEY=VALUE', type=metadata_key_value,
                             help='Set custom metadata')
-        parser.add_argument('--scratchpad', default="main",
-                            help='Select scratchpad to use')
+        parser.add_argument('--workplace', default="main",
+                            help='Select workplace to use')
         parser.add_argument('--check-db', action="store_true",
                             help='Verify library database consistency')
         self.args = parser.parse_args()

@@ -135,7 +135,7 @@ class LibraryVerifier:
 
         cur = db.execute("SELECT id, name, md5, path, format"
                          " FROM items"
-                         " WHERE scratchpad_id IS NULL")
+                         " WHERE workplace_id IS NULL")
         i = 0
         to_delete = []
         while True:

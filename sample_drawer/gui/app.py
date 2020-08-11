@@ -22,7 +22,7 @@ class GUIApplication:
         self.args = app.args
         self.config = app.config
         self.library = app.library
-        self.scratchpad = app.scratchpad
+        self.workplace = app.workplace
         self.analyzer = app.analyzer
         logging.debug("qt_argv: %r", self.args.qt_argv)
         self.qapp = QApplication(self.args.qt_argv)
