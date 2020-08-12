@@ -58,13 +58,17 @@ class Workplace:
                 return local_path
         else:
             local_path = None
+
+        tmp_metadata = metadata.copy()
+        tmp_metadata.path = None
+        path = self.library.get_library_object_path(tmp_metadata)
+        if os.path.exists(path):
+            return path
+
         source = metadata.source
         if source.startswith("file:"):
             return source[5:]
-        elif source.startswith("library:"):
-            tmp_metadata = metadata.copy()
-            tmp_metadata.md5 = source[8:]
-            return self.library.get_library_object_path(tmp_metadata)
+
         return local_path
 
     def delete_item(self, metadata):
