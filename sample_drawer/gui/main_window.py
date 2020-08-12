@@ -2,7 +2,7 @@
 import logging
 import os
 
-from PySide2.QtCore import QFile, Slot
+from PySide2.QtCore import QFile
 from PySide2.QtGui import QPalette
 from PySide2.QtUiTools import QUiLoader
 
@@ -60,8 +60,11 @@ class MainWindow:
         self.metadata_browser = MetadataBrowser(self.window.metadata_view)
         self.file_browser.file_selected.connect(self.sample_player.file_selected)
         self.file_browser.file_selected.connect(self.file_selected)
+        self.file_browser.file_activated.connect(self.file_activated)
         self.lib_items.item_selected.connect(self.item_selected)
+        self.lib_items.item_activated.connect(self.item_activated)
         self.workplace_items.item_selected.connect(self.wp_item_selected)
+        self.workplace_items.item_activated.connect(self.wp_item_activated)
         self.current_file = None
 
     def set_stylesheet(self):
@@ -88,8 +91,10 @@ class MainWindow:
     def show(self):
         self.window.show()
 
-    @Slot(Metadata)
     def file_selected(self, path):
+        if not path:
+            self.current_file = None
+            return
         path = FileKey(path)
         self.current_file = path
         self.window.waveform.set_waveform(None)
@@ -98,7 +103,12 @@ class MainWindow:
         self.file_analyzer.request_waveform(path, self.waveform_received)
         self.file_analyzer.request_file_metadata(path, self.metadata_received)
 
-    @Slot()
+    def file_activated(self, path):
+        path = FileKey(path)
+        if path != self.current_file:
+            self.file_selected(path)
+        self.sample_player.play_pause_clicked()
+
     def item_selected(self, metadata):
         logger.debug("library item selected: %r", metadata)
         if metadata:
@@ -114,7 +124,12 @@ class MainWindow:
         self.metadata_browser.set_metadata(metadata)
         self.sample_player.file_selected(path)
 
-    @Slot()
+    def item_activated(self, metadata):
+        path = self.app.library.get_library_object_path(metadata)
+        if path != self.current_file:
+            self.item_selected(metadata)
+        self.sample_player.play_pause_clicked()
+
     def wp_item_selected(self, item):
         if isinstance(item, Metadata):
             metadata = item
@@ -133,6 +148,15 @@ class MainWindow:
             self.file_analyzer.request_waveform(path, self.waveform_received)
         self.metadata_browser.set_metadata(metadata)
         self.sample_player.file_selected(path)
+
+    def wp_item_activated(self, item):
+        if not isinstance(item, Metadata):
+            return
+        metadata = item
+        path = self.app.workplace.get_object_path(metadata)
+        if path != self.current_file:
+            self.wp_item_selected(item)
+        self.sample_player.play_pause_clicked()
 
     def waveform_received(self, path, waveform):
         if path == self.current_file:

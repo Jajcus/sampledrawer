@@ -3,7 +3,7 @@ import logging
 import os
 import typing
 
-from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QDir, QFileInfo
+from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QDir, QFileInfo, QModelIndex
 from PySide2.QtGui import QIcon
 from PySide2.QtWidgets import QApplication
 from PySide2.QtWidgets import QFileSystemModel, QAbstractItemView
@@ -30,6 +30,7 @@ class FileIconProvider(QFileIconProvider):
 
 class FileBrowser(QObject):
     file_selected = Signal(str)
+    file_activated = Signal(str)
     def __init__(self, app, window):
         QObject.__init__(self)
         self.app = app
@@ -55,6 +56,7 @@ class FileBrowser(QObject):
         self.view.setCurrentIndex(index)
         self.view.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
         self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.add_name_filters()
         self.apply_show_hidden()
         self.apply_name_filters()
@@ -65,6 +67,7 @@ class FileBrowser(QObject):
         selection_model.selectionChanged.connect(self.selection_changed)
         self.show_hidden_chk.stateChanged.connect(self.apply_show_hidden)
         self.name_filter_combo.currentIndexChanged.connect(self.apply_name_filters)
+        self.view.doubleClicked.connect(self.double_clicked)
 
     def add_name_filters(self):
         for name, filters in NAME_FILTERS:
@@ -115,4 +118,8 @@ class FileBrowser(QObject):
                 self.file_selected.emit(path)
             self.current_path = path
 
-
+    @Slot(QModelIndex)
+    def double_clicked(self, index):
+        path = self.model.filePath(index)
+        if os.path.isfile(path):
+            self.file_activated.emit(path)

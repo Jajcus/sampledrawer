@@ -5,7 +5,7 @@ import os
 from functools import partial
 from urllib.parse import urlunsplit
 
-from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QMimeData, QByteArray
+from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QMimeData, QByteArray, QModelIndex
 from PySide2.QtWidgets import QAbstractItemView, QCompleter, QShortcut
 from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem, QKeySequence
 
@@ -131,6 +131,7 @@ class WorkplaceFolder:
 
 class WorkplaceItems(QObject):
     item_selected = Signal(object)
+    item_activated = Signal(object)
     def __init__(self, app, window, file_analyzer):
         QObject.__init__(self)
         self.app = app
@@ -148,10 +149,12 @@ class WorkplaceItems(QObject):
         self.view.setDragEnabled(True)
         self.view.setAcceptDrops(True)
         self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.selection_model = self.view.selectionModel()
         self.selection_model.selectionChanged.connect(self.selection_changed)
         self.view.expanded.connect(self.folder_expanded)
         self.view.collapsed.connect(self.folder_collapsed)
+        self.view.doubleClicked.connect(self.double_clicked)
         self.get_items()
         shortcut = QShortcut(QKeySequence(Qt.Key_Delete), self.view)
         shortcut.activated.connect(self.delete_selected)
@@ -231,6 +234,12 @@ class WorkplaceItems(QObject):
         else:
             metadata = None
         self.item_selected.emit(metadata)
+
+    @Slot(QModelIndex)
+    def double_clicked(self, index):
+        s_item = self.model.itemFromIndex(index)
+        metadata = s_item.data()
+        self.item_activated.emit(metadata)
 
     def get_items(self):
         self.items = self.workplace.get_items()

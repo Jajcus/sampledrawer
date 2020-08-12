@@ -5,7 +5,7 @@ import json
 
 from urllib.parse import urlunsplit
 
-from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QMimeData, QByteArray
+from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QMimeData, QByteArray, QModelIndex
 from PySide2.QtWidgets import QAbstractItemView, QCompleter
 from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem
 
@@ -128,6 +128,7 @@ class ItemModel(QStandardItemModel):
 
 class LibraryItems(QObject):
     item_selected = Signal(object)
+    item_activated = Signal(object)
     def __init__(self, app, window, lib_tree):
         QObject.__init__(self)
         self.app = app
@@ -153,12 +154,14 @@ class LibraryItems(QObject):
         self.view.setDragEnabled(True)
         self.view.setAcceptDrops(True)
         self.view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         selection_model = self.view.selectionModel()
         selection_model.selectionChanged.connect(self.selection_changed)
         tree_selection_model = window.lib_tree.selectionModel()
         tree_selection_model.selectionChanged.connect(self.tree_selection_changed)
         self.input.editingFinished.connect(self.query_entered)
         self.input.textChanged.connect(self.query_changed)
+        self.view.doubleClicked.connect(self.double_clicked)
         self.run_query()
 
     def reload(self):
@@ -188,6 +191,12 @@ class LibraryItems(QObject):
         else:
             metadata = None
         self.item_selected.emit(metadata)
+
+    @Slot(QModelIndex)
+    def double_clicked(self, index):
+        s_item = self.model.itemFromIndex(index)
+        metadata = s_item.data()
+        self.item_activated.emit(metadata)
 
     @Slot(QItemSelection)
     def tree_selection_changed(self, selection):
