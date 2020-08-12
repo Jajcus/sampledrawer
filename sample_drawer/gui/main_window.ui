@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1065</width>
+    <width>1184</width>
     <height>832</height>
    </rect>
   </property>
@@ -59,7 +59,7 @@
          <widget class="QTreeView" name="lib_items">
           <property name="minimumSize">
            <size>
-            <width>500</width>
+            <width>300</width>
             <height>0</height>
            </size>
           </property>
@@ -80,7 +80,7 @@
          <widget class="QTreeView" name="workplace_items">
           <property name="minimumSize">
            <size>
-            <width>500</width>
+            <width>300</width>
             <height>0</height>
            </size>
           </property>
@@ -173,6 +173,12 @@
     <layout class="QVBoxLayout" name="verticalLayout">
      <item>
       <widget class="QTreeView" name="file_tree">
+       <property name="minimumSize">
+        <size>
+         <width>300</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="whatsThis">
         <string>File browser</string>
        </property>
