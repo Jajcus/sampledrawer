@@ -169,7 +169,8 @@ class MainWindow:
             pass
         logger.debug("Got %r metadata: %r", path, metadata)
         self.metadata_browser.set_metadata(metadata)
-        self.window.waveform.set_duration(metadata.duration)
+        if metadata:
+            self.window.waveform.set_duration(metadata.duration)
 
     def import_files(self, paths):
         dialog = ImportDialog(self)

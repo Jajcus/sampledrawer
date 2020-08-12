@@ -55,8 +55,9 @@ class AsyncFileAnalyzer(QObject):
             callback(file_key, waveform)
             return
         def our_callback(path, file_info):
-            waveform = file_info.get("waveform")
-            callback(path, waveform)
+            if file_info:
+                waveform = file_info.get("waveform")
+                callback(path, waveform)
         self._request_info(path, callback=our_callback)
 
     def request_file_metadata(self, path, callback = None):
