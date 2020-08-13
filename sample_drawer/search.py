@@ -293,15 +293,15 @@ class MetadataQuery(SearchCondition):
             custom_key = self.key
 
         if fixed_key:
-            where.append("item.{} = ?".format(fixed_key))
+            where.append("item.{} {} ?".format(fixed_key, self.oper))
             params.append(self.value)
 
         if custom_key:
             where.append("(icv{i}.item_id = item.id"
                          " AND ck{i}.id = icv{i}.key_id"
                          " AND ck{i}.name = ?"
-                         " AND icv{i}.value = ?)"
-                         .format(i=cond_number))
+                         " AND icv{i}.value {oper} ?)"
+                         .format(i=cond_number, oper=self.oper))
             params += [self.key, self.value]
             tables = ["LEFT JOIN item_custom_values icv{i}".format(i=cond_number),
                     "LEFT JOIN custom_keys ck{i}".format(i=cond_number)]
