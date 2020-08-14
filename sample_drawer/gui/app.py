@@ -8,6 +8,7 @@ from PySide2.QtWidgets import QApplication
 
 from .signal_handler import SignalHandler
 from .main_window import MainWindow
+from .log_window import LogWindow
 
 from . import __path__ as PKG_PATH
 
@@ -37,7 +38,9 @@ class GUIApplication:
         logger.debug("Theme name %r", QIcon.themeName())
         logger.debug("Fallback theme name: %r", QIcon.fallbackThemeName())
         self.qapp.setWindowIcon(QIcon(":icons/sampledrawer.svg"))
+
     def start(self):
+        self.log_window = LogWindow(self)
         self.main_window = MainWindow(self)
         self.main_window.show()
         signal_handler = SignalHandler()

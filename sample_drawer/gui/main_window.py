@@ -2,7 +2,7 @@
 import logging
 import os
 
-from PySide2.QtCore import QFile
+from PySide2.QtCore import QFile, QObject, QEvent, Signal
 from PySide2.QtGui import QPalette
 from PySide2.QtUiTools import QUiLoader
 
@@ -43,6 +43,15 @@ class UiLoader(QUiLoader):
             return widget
         return super(UiLoader, self).createWidget(className, parent, name)
 
+class CloseEventFilter(QObject):
+    closing = Signal()
+    def __init__(self, parent):
+        QObject.__init__(self, parent)
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Close:
+            self.closing.emit()
+        return False
+
 class MainWindow:
     def __init__(self, app):
         self.app = app
@@ -50,6 +59,9 @@ class MainWindow:
         ui_file.open(QFile.ReadOnly)
         loader = UiLoader()
         self.window = loader.load(ui_file)
+        event_filter = CloseEventFilter(self.window)
+        self.window.installEventFilter(event_filter)
+        event_filter.closing.connect(self.app.log_window.close)
         self.set_stylesheet()
         self.file_browser = FileBrowser(app, self.window)
         self.lib_tree = LibraryTree(app, self.window)
@@ -65,6 +77,8 @@ class MainWindow:
         self.lib_items.item_activated.connect(self.item_activated)
         self.workplace_items.item_selected.connect(self.wp_item_selected)
         self.workplace_items.item_activated.connect(self.wp_item_activated)
+        log_window = self.app.log_window.window
+        self.window.action_log_window.toggled.connect(log_window.setVisible)
         self.current_file = None
 
     def set_stylesheet(self):
@@ -193,4 +207,3 @@ class MainWindow:
             self.lib_tree.reload()
         else:
             logger.warning("Nothing to import")
-
