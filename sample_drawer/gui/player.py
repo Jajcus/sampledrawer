@@ -11,13 +11,28 @@ ffi = FFI()
 logger = logging.getLogger("player")
 
 class Player:
-    def __init__(self, window):
+    def __init__(self, app, window):
+        self.app = app
         self.window = window
 
         self.play_icon = QIcon.fromTheme("media-playback-start")
         self.pause_icon = QIcon.fromTheme("media-playback-pause")
 
-        device = QAudioDeviceInfo.defaultOutputDevice()
+        if self.app.args.audio_device:
+            available_devices = {}
+            for device in QAudioDeviceInfo.availableDevices(QAudio.AudioOutput):
+                available_devices[device.deviceName()] = device
+            try:
+                device = available_devices[self.app.args.audio_device]
+            except KeyError:
+                logger.error("Unknown audio device: %r", self.app.args.audio_device)
+                logger.info("Available devices:")
+                for device_name in available_devices:
+                    logger.info("    %r", device_name)
+                self.app.exit(1)
+                device = QAudioDeviceInfo.defaultOutputDevice()
+        else:
+            device = QAudioDeviceInfo.defaultOutputDevice()
         playback_format = device.preferredFormat()
         self.decoder = QAudioDecoder()
         self.decoder.setAudioFormat(playback_format)

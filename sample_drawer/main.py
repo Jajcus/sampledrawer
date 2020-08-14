@@ -83,6 +83,8 @@ class Application:
                             help='Select workplace to use')
         parser.add_argument('--check-db', action="store_true",
                             help='Verify library database consistency')
+        parser.add_argument('--audio-device',
+                            help='Select audio device to use.')
         self.args = parser.parse_args()
 
     def setup_logging(self):

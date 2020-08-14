@@ -19,6 +19,7 @@ logger = logging.getLogger("gui.app")
 
 class GUIApplication:
     def __init__(self, app):
+        self.started = False
         self.app = app
         self.args = app.args
         self.config = app.config
@@ -58,4 +59,4 @@ class GUIApplication:
         if self.qapp and self.started:
             self.qapp.exit(code)
         else:
-            self.appp.exit(code)
+            self.app.exit(code)

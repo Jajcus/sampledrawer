@@ -66,7 +66,7 @@ class MainWindow:
         self.file_browser = FileBrowser(app, self.window)
         self.lib_tree = LibraryTree(app, self.window)
         self.lib_items = LibraryItems(app, self.window, self.lib_tree)
-        self.sample_player = Player(self.window)
+        self.sample_player = Player(app, self.window)
         self.file_analyzer = AsyncFileAnalyzer()
         self.workplace_items = WorkplaceItems(app, self.window, self.file_analyzer)
         self.metadata_browser = MetadataBrowser(self.window.metadata_view)
