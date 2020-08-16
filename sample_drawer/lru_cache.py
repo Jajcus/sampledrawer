@@ -4,8 +4,10 @@ import threading
 SENTINEL = object()
 PREV, NEXT, KEY, VALUE = 0, 1, 2, 3
 
+
 class LRUCache:
     """LRU cache based on Python's functools lru_cache wrapper."""
+
     def __init__(self, maxsize=100):
         self._cache = {}
         self._lock = threading.RLock()

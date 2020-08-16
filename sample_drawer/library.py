@@ -1,32 +1,35 @@
 
+from . import __path__ as PKG_PATH
 import os
 import logging
 import shutil
 import sqlite3
 import threading
 
-from collections import defaultdict
-
 from .metadata import FIXED_METADATA, FIXED_METADATA_D, FIXED_METADATA_KEYS, Metadata
 
 logger = logging.getLogger("library")
 
-from . import __path__ as PKG_PATH
 SCHEMA_FILENAME = os.path.join(PKG_PATH[0], "schema.sql")
+
 
 class LibraryError(Exception):
     def __str__(self):
         return str(self.args[0])
 
+
 class LibraryConflictError(LibraryError):
     @property
     def md5(self):
         return self.args[1]
+
     @property
     def existing_name(self):
         return self.args[2]
 
+
 DATABASE_VERSION = 0
+
 
 class Library:
     def __init__(self, app):
@@ -60,7 +63,7 @@ class Library:
                 shutil.rmtree(self.tmp_dir)
             except OSError as err:
                 logger.debug("removing %r failed: %s", self.tmp_dir, err)
-                pass
+
             self.tmp_dir = None
 
     def create_database(self, db_path):

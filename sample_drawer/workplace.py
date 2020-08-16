@@ -2,27 +2,28 @@
 import os
 import logging
 import shutil
-import sqlite3
-import threading
 
-from collections import defaultdict
 
-from .metadata import FIXED_METADATA, FIXED_METADATA_D, FIXED_METADATA_KEYS, Metadata
+from .metadata import FIXED_METADATA
 from .search import SearchQuery
 
 logger = logging.getLogger("workplace")
+
 
 class WorkplaceError(Exception):
     def __str__(self):
         return str(self.args[0])
 
+
 class WorkplaceConflictError(WorkplaceError):
     @property
     def path(self):
         return self.args[1]
+
     @property
     def existing_name(self):
         return self.args[2]
+
 
 class Workplace:
     def __init__(self, app, library, name):

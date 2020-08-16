@@ -4,7 +4,6 @@ import os
 import re
 import shutil
 
-from .library import Library
 from .metadata import Metadata
 
 TMPDIR_RE = re.compile(r"tmp.(\d+)$")
@@ -12,6 +11,7 @@ FILENAME_RE = re.compile(r"([0-9a-f]{32})\.(\w+)$")
 HEX_DIGITS = "0123456789abcdef"
 
 logger = logging.getLogger("library_verifier")
+
 
 class Progress:
     def __init__(self, stages):
@@ -22,17 +22,20 @@ class Progress:
         self.error = None
         self.question = None
         self._saved_answers = {}
+
     def __repr__(self):
         return "<Progress {}/{} {:3d} {!r} {!r}>".format(self.stage,
-                                                       self.stages,
-                                                       self.stage_percent,
-                                                       self.stage_name,
-                                                       self.error)
+                                                         self.stages,
+                                                         self.stage_percent,
+                                                         self.stage_name,
+                                                         self.error)
+
     def _next_stage(self, name):
         self.stage += 1
         self.stage_name = name
         self.stage_percent = 0
         yield self
+
     def _set_percent(self, percent):
         logger.debug("_set_percent(%r)", percent)
         if percent < 0:
@@ -44,6 +47,7 @@ class Progress:
         if percent > self.stage_percent:
             self.stage_percent = percent
             yield self
+
     def _send_error(self, message, question=None):
         self.error = message
         if question:
@@ -57,22 +61,27 @@ class Progress:
             self._saved_answers[type(question)] = question.the_answer
         self.error = None
         self.question = None
+
     def _clear_error(self):
         self.error = None
         yield self
+
 
 class Question:
     options = ["Yes", "No"]
     save_options = {"Always": "Yes", "Never": "No"}
     default = "No"
-    keys = { "y": "Yes", "n": "No", "a": "Always", "e": "Never" }
+    keys = {"y": "Yes", "n": "No", "a": "Always", "e": "Never"}
+
     def __init__(self, question):
         self.question = question
         self.the_answer = None
         self.save_answer = False
+
     @property
     def all_options(self):
         return list(self.options) + list(self.save_options)
+
     def answer(self, the_answer):
         if the_answer in self.options:
             self.the_answer = the_answer
@@ -85,35 +94,42 @@ class Question:
             self.the_answer = the_answer
             self.save_answer = True
 
+
 class RemoveItemWhenFileMissing(Question):
     def __init__(self, item_name, path):
         question = "Remove {!r}?".format(item_name)
         Question.__init__(self, question)
+
 
 class RemoveStaleTmpDir(Question):
     def __init__(self):
         question = "Remove stale temporary directory?"
         Question.__init__(self, question)
 
+
 class RemoveUnknownFile(Question):
     def __init__(self):
         question = "Remove unknown file?"
         Question.__init__(self, question)
+
 
 class RemoveInvalidItem(Question):
     def __init__(self):
         question = "Remove invalid item?"
         Question.__init__(self, question)
 
+
 class FixBrokenTagAssignments(Question):
     def __init__(self, assignments):
         question = "Fix broken tag assignments?"
         Question.__init__(self, question)
 
+
 class LibraryVerifier:
     def __init__(self, app):
         self.app = app
         self.lib = app.library
+
     def verify(self):
         progress = Progress(3)
         with self.lib.db as db:
@@ -147,8 +163,8 @@ class LibraryVerifier:
             if not (i % 100):
                 yield from progress._set_percent(100 * i / item_count)
             metadata = Metadata({"_md5": item_md5,
-                                "_path": path,
-                                "_format": file_format})
+                                 "_path": path,
+                                 "_format": file_format})
             path = self.lib.get_library_object_path(metadata)
             if not os.path.exists(path):
                 question = RemoveItemWhenFileMissing(name, path)
@@ -165,7 +181,7 @@ class LibraryVerifier:
             logger.debug("Removing items %r", ids)
             placeholders = ", ".join(["?"] * len(ids))
             db.execute("DELETE FROM items WHERE id IN ({})".format(placeholders),
-                        ids)
+                       ids)
         yield from progress._set_percent(100)
 
     def _check_files(self, db, progress):
@@ -306,4 +322,3 @@ class LibraryVerifier:
             if question.the_answer == "Yes":
                 db.execute("DELETE FROM item_tags"
                            " WHERE item_id NOT IN (SELECT id FROM items)")
-
