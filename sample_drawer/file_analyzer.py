@@ -1,6 +1,5 @@
 
 import hashlib
-import math
 import os
 import logging
 
@@ -16,18 +15,23 @@ READ_BLOCK_SIZE = 16*1024*1024
 
 logger = logging.getLogger("file_analyzer")
 
+
 class FileKey:
     """For reliably using filenames as keys in a cache."""
+
     def __init__(self, path):
         if isinstance(path, FileKey):
             self.path = path.path
             self.stat = path.stat
         else:
             self.path = os.path.realpath(path)
+
     def __repr__(self):
         return "FileKey({!r})".format(self.path)
+
     def __str__(self):
         return self.path
+
     @cached_property
     def stat(self):
         try:
@@ -37,26 +41,29 @@ class FileKey:
         except OSError as err:
             logger.debug("FileKey: %r: %s", self.path, err)
             return None
+
     def __hash__(self):
         if self.stat:
             return hash((self.path, self.stat.st_size, self.stat.st_mtime))
-        else:
-            return hash(self.path)
+
+        return hash(self.path)
+
     def __eq__(self, other):
         if isinstance(other, FileKey):
             return (self.path == other.path
                     and self.stat
                     and self.stat.st_size == other.stat.st_size
                     and self.stat.st_mtime == other.stat.st_mtime)
-        else:
-            return self.path == other
+
+        return self.path == other
+
 
 class FileAnalyzer:
     def __init__(self):
         pass
 
     def get_file_info(self, path):
-        file_info = { "path": str(path) }
+        file_info = {"path": str(path)}
         logger.debug("Analyzing %r...", path)
         with open(str(path), "rb") as source_file:
             with SoundFile(source_file) as snd_file:
@@ -83,7 +90,7 @@ class FileAnalyzer:
                 try:
                     file_info["peak_level"] = compute_peak_level(frames)
                 except ValueError as err:
-                     logger.error(str(err))
+                    logger.error(str(err))
 
                 file_info["waveform"] = compute_waveform(frames, samplerate)
 
@@ -100,6 +107,7 @@ class FileAnalyzer:
     def get_file_metadata(self, path):
         file_info = self.get_file_info(path)
         return Metadata.from_file_info(file_info)
+
 
 class CachedFileAnalyzer(FileAnalyzer):
     def __init__(self):

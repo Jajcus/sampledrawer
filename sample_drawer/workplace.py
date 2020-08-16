@@ -2,27 +2,28 @@
 import os
 import logging
 import shutil
-import sqlite3
-import threading
 
-from collections import defaultdict
 
-from .metadata import FIXED_METADATA, FIXED_METADATA_D, FIXED_METADATA_KEYS, Metadata
+from .metadata import FIXED_METADATA
 from .search import SearchQuery
 
 logger = logging.getLogger("workplace")
+
 
 class WorkplaceError(Exception):
     def __str__(self):
         return str(self.args[0])
 
+
 class WorkplaceConflictError(WorkplaceError):
     @property
     def path(self):
         return self.args[1]
+
     @property
     def existing_name(self):
         return self.args[2]
+
 
 class Workplace:
     def __init__(self, app, library, name):
@@ -177,7 +178,7 @@ class Workplace:
                 cur.execute("INSERT INTO tags(name) VALUES(?)", (tag,))
                 tag_id = cur.lastrowid
             cur.execute("INSERT INTO item_tags(item_id, tag_id)"
-                            " VALUES(?, ?)", (item_id, tag_id))
+                        " VALUES(?, ?)", (item_id, tag_id))
 
         for key in metadata:
             if key.startswith("_"):
@@ -191,8 +192,7 @@ class Workplace:
                 cur.execute("INSERT INTO custom_keys(name) VALUES(?)", (key,))
                 key_id = cur.lastrowid
             cur.execute("INSERT INTO item_custom_values(item_id, key_id, value)"
-                            " VALUES(?, ?, ?)", (item_id, key_id, value))
-
+                        " VALUES(?, ?, ?)", (item_id, key_id, value))
 
     def get_items(self):
         query = SearchQuery([])

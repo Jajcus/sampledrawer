@@ -3,9 +3,10 @@ import math
 import logging
 import numpy
 
-WAVEFORM_RESOLUTION = 100 # samples per second
+WAVEFORM_RESOLUTION = 100  # samples per second
 
 logger = logging.getLogger("dsp")
+
 
 def compute_peak_level(frames):
     peak_level = max(numpy.amax(frames), -numpy.amin(frames))
@@ -19,7 +20,7 @@ def compute_peak_level(frames):
     return peak_level_db
 
 
-def compute_waveform(frames, samplerate, resolution = WAVEFORM_RESOLUTION):
+def compute_waveform(frames, samplerate, resolution=WAVEFORM_RESOLUTION):
 
     length = frames.shape[0]
     channels = frames.shape[1]

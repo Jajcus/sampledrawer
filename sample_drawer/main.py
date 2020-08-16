@@ -12,7 +12,7 @@ from .library import Library, LibraryConflictError
 from .library_verifier import LibraryVerifier
 from .workplace import Workplace
 from .file_analyzer import FileAnalyzer
-from .metadata import FIXED_METADATA_D, FIXED_METADATA_KEYS, VALID_KEY_RE
+from .metadata import FIXED_METADATA_D, FIXED_METADATA_KEYS
 from .config import Config
 
 APP_NAME = "sampledrawer"
@@ -21,6 +21,7 @@ APP_AUTHOR = "Jajcus"
 LOG_FORMAT = "%(asctime)-15s %(thread)d %(message)s"
 
 logger = logging.getLogger("main")
+
 
 def metadata_key_value(arg):
     if "=" not in arg:
@@ -31,14 +32,17 @@ def metadata_key_value(arg):
         try:
             key = FIXED_METADATA_KEYS[key]
         except KeyError:
-            raise argparse.ArgumentTypeError("{!r} is not a valid key".format(key))
+            raise argparse.ArgumentTypeError(
+                "{!r} is not a valid key".format(key))
     else:
         mdtype = FIXED_METADATA_D.get(key)
     if mdtype:
         if not mdtype.editable:
-            raise argparse.ArgumentTypeError("{!r} is not editable".format(key))
+            raise argparse.ArgumentTypeError(
+                "{!r} is not editable".format(key))
         key = "_" + mdtype.name
     return (key.lower(), value)
+
 
 class Application:
     def __init__(self):
@@ -57,7 +61,8 @@ class Application:
         self.workplace = Workplace(self, self.library, self.args.workplace)
 
     def parse_args(self):
-        parser = argparse.ArgumentParser(description='Sample Drawer – audio sample browser and organizer.')
+        parser = argparse.ArgumentParser(
+            description='Sample Drawer – audio sample browser and organizer.')
         parser.set_defaults(debug_level=logging.INFO, metadata=[])
         parser.add_argument('--root', action='store', dest='root',
                             help='For GUI: Display only this directory in filesystem browser'
@@ -141,8 +146,8 @@ class Application:
                 question.answer(answer)
         if errors:
             return 1
-        else:
-            return 0
+
+        return 0
 
     def import_file(self, metadata_rules, path, root):
         try:
@@ -187,17 +192,18 @@ class Application:
     def start(self):
         if self.args.import_files:
             return self.import_files()
-        elif self.args.check_db:
+        if self.args.check_db:
             return self.check_db()
-        else:
-            self.gui = GUIApplication(self)
-            try:
-                return self.gui.start()
-            finally:
-                self.gui = None
+
+        self.gui = GUIApplication(self)
+        try:
+            return self.gui.start()
+        finally:
+            self.gui = None
 
     def exit(self, code):
         sys.exit(code)
+
 
 def main():
     app = Application()

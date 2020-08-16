@@ -1,6 +1,5 @@
 
 import copy
-import json
 
 DEFAULT_IMPORT_RULES = [
         ("_path", r"^(.*/)?([^/]*?)(\.[^/.]*)?$", {"_name": "{2}"}),
@@ -16,9 +15,11 @@ DEFAULT_CONFIG = {
             }
         }
 
+
 class Config:
     def __init__(self):
         self.config = copy.deepcopy(DEFAULT_CONFIG)
+
     def __getitem__(self, key):
         try:
             return self.config[key]

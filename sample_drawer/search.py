@@ -3,15 +3,17 @@ import logging
 import re
 import shlex
 
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 
 from .metadata import VALID_TAG_RE, VALID_KEY_RE, FIXED_METADATA_D, FIXED_METADATA_KEYS
+
 
 class SQLQuery:
     def __init__(self, tables, where_clause, parameters):
         self.tables = tables
         self.where_clause = where_clause
         self.parameters = parameters
+
 
 NULL_SQL_QUERY = SQLQuery([], "", [])
 NOTHING_SQL_QUERY = SQLQuery([], "FALSE", [])
@@ -23,6 +25,7 @@ NEED_ESCAPING_RE = re.compile(r"([\"\\])")
 
 logger = logging.getLogger("search")
 
+
 def quote(data, force=False):
     """Quote string using ""
 
@@ -32,30 +35,41 @@ def quote(data, force=False):
         return data
     return '"' + NEED_ESCAPING_RE.sub(r"\\\1", data) + '"'
 
+
 class SearchCondition:
     applied_in_group = False
+
     @classmethod
     def from_string(cls, query):
         raise NotImplementedError
+
     def to_string(self):
         return "".join(self.to_strings())
+
     def to_strings(self):
         raise NotImplementedError
+
     def get_sql_query(self, cond_number):
         raise NotImplementedError
+
     @classmethod
     def get_sql_group_query(cls, conditions):
         raise NotImplementedError
 
+
 class SearchQuery:
     cond_types = []
+
     def __init__(self, conditions):
         self.conditions = conditions
+
     def __str__(self):
         return self.as_string()
+
     @classmethod
     def add_condition_type(cls, cond_class):
         cls.cond_types.append(cond_class)
+
     @classmethod
     def from_string(cls, query):
         try:
@@ -145,21 +159,27 @@ class SearchQuery:
         logger.debug("result query: %r, %r", sql_query, params)
         return sql_query, params
 
+
 class TagIncludeQuery(SearchCondition):
     applied_in_group = True
+
     def __init__(self, tag_name):
         self.tag_name = tag_name
+
     def __repr__(self):
         return "<TagIncludeQuery {!r}>".format(self.tag_name)
+
     @classmethod
     def from_string(cls, query):
         if len(query) < 2:
-            raise ValueError("Not a tag include query: %r - too short" % (query,))
+            raise ValueError(
+                "Not a tag include query: %r - too short" % (query,))
         if query[0] != "?":
-            raise ValueError("Not a tag include query: %r - does not start with '?'" % (query,))
+            raise ValueError(
+                "Not a tag include query: %r - does not start with '?'" % (query,))
         if query[1:] == "/":
             return cls("/")
-        elif not VALID_TAG_RE.match(query[1:]):
+        if not VALID_TAG_RE.match(query[1:]):
             raise ValueError("Not a tag query: %r - bad tag name" % (query,))
         return cls(query[1:])
 
@@ -181,23 +201,30 @@ class TagIncludeQuery(SearchCondition):
         params = list(included)
         return SQLQuery(["item_tags itag"], " AND ".join(where), params)
 
+
 SearchQuery.add_condition_type(TagIncludeQuery)
+
 
 class TagExcludeQuery(SearchCondition):
     applied_in_group = True
+
     def __init__(self, tag_name):
         self.tag_name = tag_name
+
     def __repr__(self):
         return "<TagExcludeQuery {!r}>".format(self.tag_name)
+
     @classmethod
     def from_string(cls, query):
         if len(query) < 2:
-            raise ValueError("Not a tag exclude query: %r - too short" % (query,))
+            raise ValueError(
+                "Not a tag exclude query: %r - too short" % (query,))
         if query[0] != "-":
-            raise ValueError("Not a tag exclude query: %r - does not start with '-'" % (query,))
+            raise ValueError(
+                "Not a tag exclude query: %r - does not start with '-'" % (query,))
         if query[1:] == "/":
             return cls("/")
-        elif not VALID_TAG_RE.match(query[1:]):
+        if not VALID_TAG_RE.match(query[1:]):
             raise ValueError("Not a tag query: %r - bad tag name" % (query,))
         return cls(query[1:])
 
@@ -215,27 +242,33 @@ class TagExcludeQuery(SearchCondition):
         params = list(excluded)
         placeholders = ", ".join(["?"] * len(params))
         where = ("item.id NOT IN ("
-                    " SELECT item_id FROM item_tags, tags"
-                    " WHERE item_tags.tag_id = tags.id"
-                        " AND tags.name IN ({}))".format(placeholders))
+                 " SELECT item_id FROM item_tags, tags"
+                 " WHERE item_tags.tag_id = tags.id"
+                 " AND tags.name IN ({}))".format(placeholders))
         return SQLQuery([], where, params)
 
+
 SearchQuery.add_condition_type(TagExcludeQuery)
+
 
 class TagRequireQuery(SearchCondition):
     def __init__(self, tag_name):
         self.tag_name = tag_name
+
     def __repr__(self):
         return "<TagIncludeQuery {!r}>".format(self.tag_name)
+
     @classmethod
     def from_string(cls, query):
         if len(query) < 2:
-            raise ValueError("Not a tag require query: %r - too short" % (query,))
+            raise ValueError(
+                "Not a tag require query: %r - too short" % (query,))
         if query[0] != "+":
-            raise ValueError("Not a tag require query: %r - does not start with '?'" % (query,))
+            raise ValueError(
+                "Not a tag require query: %r - does not start with '?'" % (query,))
         if query[1:] == "/":
             return cls("/")
-        elif not VALID_TAG_RE.match(query[1:]):
+        if not VALID_TAG_RE.match(query[1:]):
             raise ValueError("Not a tag query: %r - bad tag name" % (query,))
         return cls(query[1:])
 
@@ -244,37 +277,44 @@ class TagRequireQuery(SearchCondition):
             return NULL_SQL_QUERY
 
         tables = ["item_tags itag{0}".format(cond_number),
-                    "tags tag{0}".format(cond_number)]
+                  "tags tag{0}".format(cond_number)]
         where = ("itag{0}.item_id = item.id"
-                    " AND itag{0}.tag_id = tag{0}.id"
-                    " AND tag{0}.name = ?".format(cond_number))
+                 " AND itag{0}.tag_id = tag{0}.id"
+                 " AND tag{0}.name = ?".format(cond_number))
         params = [self.tag_name]
         return SQLQuery(tables, where, params)
 
+
 SearchQuery.add_condition_type(TagRequireQuery)
+
 
 class MetadataQuery(SearchCondition):
     def __init__(self, key, value, oper="="):
         self.key = key.lower()
         self.value = value
         self.oper = oper
+
     def __repr__(self):
         return "<MetadataQuery {!r} {} {!r}>".format(self.key, self.oper, self.value)
+
     @classmethod
     def from_string(cls, query):
         for oper in ("=", "==", "<", ">", "<=", ">=", "!=", "<>"):
             if oper in query:
                 break
         else:
-            raise ValueError("Not a metadata query: %r - operator missing" % (query,))
+            raise ValueError(
+                "Not a metadata query: %r - operator missing" % (query,))
         key, value = query.split(oper, 1)
         key = key.strip()
 
         if key.startswith("_"):
             if key not in FIXED_METADATA_KEYS:
-                raise ValueError("Not a metadata query: %r - unknonw key" % (query,))
+                raise ValueError(
+                    "Not a metadata query: %r - unknonw key" % (query,))
         elif not VALID_KEY_RE.match(key):
-            raise ValueError("Not a metadata query: %r - invalid key" % (query,))
+            raise ValueError(
+                "Not a metadata query: %r - invalid key" % (query,))
 
         return cls(key, value, oper)
 
@@ -304,22 +344,28 @@ class MetadataQuery(SearchCondition):
                          .format(i=cond_number, oper=self.oper))
             params += [self.key, self.value]
             tables = ["LEFT JOIN item_custom_values icv{i}".format(i=cond_number),
-                    "LEFT JOIN custom_keys ck{i}".format(i=cond_number)]
+                      "LEFT JOIN custom_keys ck{i}".format(i=cond_number)]
             return SQLQuery(tables, "(" + " OR ".join(where) + ")", params)
         else:
             return SQLQuery(None, where[0], params)
 
+
 SearchQuery.add_condition_type(MetadataQuery)
+
 
 class MiscQuery(SearchCondition):
     applied_in_group = True
+
     def __init__(self, query):
         self.query = query
+
     def __repr__(self):
         return "<MiscQuery {!r}>".format(self.query)
+
     @classmethod
     def from_string(cls, query):
         return cls(query)
+
     @classmethod
     def get_sql_group_query(cls, queries, cond_number):
         query_string = []
@@ -329,7 +375,9 @@ class MiscQuery(SearchCondition):
                         "item.id = fts.docid AND fts.content MATCH ?",
                         [" ".join(query_string)])
 
+
 SearchQuery.add_condition_type(MiscQuery)
+
 
 class CompletionQuery(SearchQuery):
     def __init__(self, query_text, start_index, quoted, conditions):
@@ -338,9 +386,11 @@ class CompletionQuery(SearchQuery):
         self.start_index = start_index
         compl_condition = CompletionQueryCondition(query_text[start_index:])
         self.conditions = conditions + [compl_condition]
+
     @property
     def prefix(self):
         return self.query_text[self.start_index:]
+
     @classmethod
     def from_string(cls, query_text):
         logger.debug("Considering %r for completion", query_text)
@@ -375,8 +425,8 @@ class CompletionQuery(SearchQuery):
             base_query = ""
             to_complete = query_text
             start_index = 0
-        if not to_complete or ( not to_complete[-1].isalpha()
-                and not to_complete[-1].isdigit()):
+        if not to_complete or (not to_complete[-1].isalpha()
+                               and not to_complete[-1].isdigit()):
             logger.debug("nothing to complete")
             return None
 
@@ -386,15 +436,20 @@ class CompletionQuery(SearchQuery):
             base_conditions = []
         return cls(query_text, start_index, False, base_conditions)
 
+
 class CompletionQueryCondition(SearchCondition):
     applied_in_group = False
+
     def __init__(self, query):
         self.query = query
+
     def __repr__(self):
         return "<MiscQuery {!r}>".format(self.query)
+
     @classmethod
     def from_string(cls, query):
         return cls(query)
+
     def get_sql_query(self, cond_number):
         query_string = quote(self.query + "*")
         return SQLQuery(["fts compl_fts"],
