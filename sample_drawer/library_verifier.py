@@ -289,6 +289,18 @@ class LibraryVerifier:
                         logger.error("Cannot remove %r: %s", path, err)
                     else:
                         db.execute("DELETE FROM items WHERE id = ?", (item_id,))
+            if ext != item_format.lower():
+                question = RemoveUnknownFile()
+                msg = ("File {!r} extension does not match file format from the library {!r}"
+                       .format(path, item_format))
+                yield from progress._send_error(msg, question)
+                if question.the_answer == "Yes":
+                    try:
+                        os.unlink(path)
+                    except OSError as err:
+                        logger.error("Cannot remove %r: %s", path, err)
+                continue
+
             # TODO: check format/duration/etc
             # it is hard to imagine a mismatch here would happen, though
 
