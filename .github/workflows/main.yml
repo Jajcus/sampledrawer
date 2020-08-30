@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+strategy:
+      matrix:
+        python: [3.7, 3.8]
+
+jobs:
+  tox:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install Tox and any other packages
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install tox
+      - name: Run Tox
+        run: tox -e py
