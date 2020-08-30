@@ -306,8 +306,6 @@ class LibraryVerifier:
 
     def _check_item_tags(self, db, progress):
         yield from progress._next_stage("Checking item tags")
-        cur = db.execute("SELECT count(*) FROM item_tags")
-        it_count = cur.fetchone()[0]
         cur = db.execute("SELECT id, tag_id, item_id FROM item_tags"
                          " WHERE tag_id NOT IN (SELECT id FROM tags)")
         rows = cur.fetchall()

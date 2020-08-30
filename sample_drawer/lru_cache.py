@@ -54,9 +54,14 @@ class LRUCache:
                 oldroot[KEY] = key
                 oldroot[VALUE] = value
                 # Empty the oldest link and make it the new root.
+                # Keep a reference to the old key and old result to
+                # prevent their ref counts from going to zero during the
+                # update. That will prevent potentially arbitrary object
+                # clean-up code (i.e. __del__) from running while we're
+                # still adjusting the links.
                 self._root = oldroot[NEXT]
                 oldkey = self._root[KEY]
-                oldresult = self._root[VALUE]
+                oldresult = self._root[VALUE]  # noqa: F841 keep reference
                 self._root[KEY] = self._root[VALUE] = None
                 # Now update the cache dictionary.
                 del self._cache[oldkey]

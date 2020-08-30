@@ -77,7 +77,7 @@ class Metadata:
         new_tags = set()
         for tag in tags:
             if not VALID_TAG_RE.match(tag):
-                logger.warning("Invalid tag: %r", key)
+                logger.warning("Invalid tag: %r", tag)
             else:
                 new_tags.add(tag)
         object.__setattr__(self, "_tags", new_tags)
@@ -85,14 +85,14 @@ class Metadata:
     def add_tags(self, tags):
         for tag in tags:
             if not VALID_TAG_RE.match(tag):
-                logger.warning("Invalid tag: %r", key)
+                logger.warning("Invalid tag: %r", tag)
             else:
                 self._tags.add(tag)
 
     def remove_tags(self, tags):
         for tag in tags:
             if not VALID_TAG_RE.match(tag):
-                logger.warning("Invalid tag: %r", key)
+                logger.warning("Invalid tag: %r", tag)
             else:
                 self._tags.discard(tag)
 

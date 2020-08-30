@@ -40,4 +40,3 @@ def compute_waveform(frames, samplerate, resolution=WAVEFORM_RESOLUTION):
     waveform = numpy.array([mins, maxes]).transpose()
 
     return waveform
-
