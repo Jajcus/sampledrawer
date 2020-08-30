@@ -1,7 +1,6 @@
-include icons/*.png
-include icons/*.svg
 include LICENSE
 include resources.qrc
 include *.rst
 include tox.ini
 include sample_drawer/gui/*.ui
+include sample_drawer/gui/resources.rcc

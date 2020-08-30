@@ -10,9 +10,9 @@ ICONS = \
 
 SVG_ICONS = $(foreach icon,$(ICONS),icons/$(icon).svg)
 
-all: resources.rcc
+all: sample_drawer/gui/resources.rcc
 
-resources.rcc: resources.qrc $(SVG_ICONS)
+sample_drawer/gui/resources.rcc: resources.qrc $(SVG_ICONS)
 	rcc -o "$@" --binary "$<"
 
 icons/%.png: icons/%.svg
