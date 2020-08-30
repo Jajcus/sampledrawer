@@ -1,7 +1,12 @@
 *~
-.*.swp
-__pycache__
-*.pyc
-*.rcc
-test.wav
+build/
+dist/
 icons/*.png
+MANIFEST
+*.pyc
+__pycache__
+*.rcc
+Sample_Drawer.egg-info/
+.*.swp
+test.wav
+.tox/
