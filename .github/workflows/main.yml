@@ -25,6 +25,8 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install tox
+      - name: Install Qt5 dev tools
+        run: sudo apt install qtbase5-dev-tools
       - name: Run Tox
         run: tox -e py
 
