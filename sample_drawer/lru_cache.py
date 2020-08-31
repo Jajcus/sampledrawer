@@ -41,6 +41,7 @@ class LRUCache:
         result = self.get(key, default=SENTINEL)
         if result is SENTINEL:
             raise KeyError(key)
+        return result
 
     def put(self, key, value):
         with self._lock:
