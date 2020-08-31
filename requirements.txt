@@ -1,4 +1,5 @@
-appdirs
-cffi
-PySide2
-SoundFile
+appdirs==1.4.4
+cffi==1.14.2
+PySide2==5.15.0
+SoundFile==0.10.3.post1
+numpy==1.17.4
