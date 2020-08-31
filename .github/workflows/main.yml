@@ -28,6 +28,6 @@ jobs:
       - name: Install Qt5 dev tools
         run: sudo apt install qtbase5-dev-tools
       - name: Run Tox
-        run: tox -e py
+        run: tox -e py,flake8
 
 # vi: sw=2 sts=2 et
