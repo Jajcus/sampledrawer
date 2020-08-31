@@ -84,7 +84,7 @@ class Library:
             except sqlite3.Error as err:
                 logger.error("Cannot open database %r: %s", db_path, err)
                 self.app.exit(1)
-        except:
+        except:  # noqa: E722 (re-raised)
             try:
                 os.unlink(db_path)
             except IOError:
@@ -150,7 +150,7 @@ class Library:
             logger.debug("hard-linking %r to %r", orig_path, new_path)
             os.link(orig_path, new_path)
         except OSError as err:
-            logger.debug("hard-link failed, trying to copy instead")
+            logger.debug("hard-link failed (%s), trying to copy instead", err)
             shutil.copy(orig_path, new_path)
 
         def cleanup():
@@ -209,8 +209,8 @@ class Library:
                 else:
                     cur.execute("INSERT INTO tags(name) VALUES(?)", (tag,))
                     tag_id = cur.lastrowid
-                cur.execute("INSERT INTO item_tags(item_id, tag_id)"
-                                " VALUES(?, ?)", (item_id, tag_id))
+                cur.execute("INSERT INTO item_tags(item_id, tag_id) VALUES(?, ?)",
+                            (item_id, tag_id))
 
             for key in metadata:
                 if key.startswith("_"):
@@ -224,7 +224,8 @@ class Library:
                     cur.execute("INSERT INTO custom_keys(name) VALUES(?)", (key,))
                     key_id = cur.lastrowid
                 cur.execute("INSERT INTO item_custom_values(item_id, key_id, value)"
-                                " VALUES(?, ?, ?)", (item_id, key_id, value))
+                            " VALUES(?, ?, ?)",
+                            (item_id, key_id, value))
 
             fts_content = []
             for key in metadata:
@@ -326,12 +327,11 @@ class Library:
                 continue
             tags.append(tag)
 
-
         logging.debug("Looking for custom metadata of item %r", item_id)
         cur.execute("SELECT ck.name AS key, icv.value AS value"
-                    " FROM item_custom_values icv"
-                        " JOIN custom_keys ck ON (ck.id = icv.key_id)"
-                    " WHERE icv.item_id=?", (item_id,))
+                    " FROM item_custom_values icv JOIN custom_keys ck ON (ck.id = icv.key_id)"
+                    " WHERE icv.item_id=?",
+                    (item_id,))
         for key, value in cur.fetchall():
             data[key] = value
 

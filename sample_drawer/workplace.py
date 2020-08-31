@@ -120,8 +120,6 @@ class Workplace:
             raise ValueError("md5 is required for lib item import")
         if name is None:
             name = metadata.name
-            if not metadata.name:
-                name = os.path.basename(orig_path).rsplit(".", 1)[0]
         source = "lib:{}".format(metadata.md5)
         with self.library.db:
             path = self._import_item(source, metadata, folder, name)
@@ -131,7 +129,6 @@ class Workplace:
                             path)
 
     def _import_item(self, source, metadata, folder="", name=None):
-        md5 = metadata.md5
         if metadata.format:
             filename = "{}.{}".format(name, metadata.format.lower())
         else:
@@ -177,8 +174,8 @@ class Workplace:
             else:
                 cur.execute("INSERT INTO tags(name) VALUES(?)", (tag,))
                 tag_id = cur.lastrowid
-            cur.execute("INSERT INTO item_tags(item_id, tag_id)"
-                            " VALUES(?, ?)", (item_id, tag_id))
+            cur.execute("INSERT INTO item_tags(item_id, tag_id) VALUES(?, ?)",
+                        (item_id, tag_id))
 
         for key in metadata:
             if key.startswith("_"):
@@ -192,8 +189,8 @@ class Workplace:
                 cur.execute("INSERT INTO custom_keys(name) VALUES(?)", (key,))
                 key_id = cur.lastrowid
             cur.execute("INSERT INTO item_custom_values(item_id, key_id, value)"
-                            " VALUES(?, ?, ?)", (item_id, key_id, value))
-
+                        " VALUES(?, ?, ?)",
+                        (item_id, key_id, value))
 
     def get_items(self):
         query = SearchQuery([])

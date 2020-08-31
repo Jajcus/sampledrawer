@@ -41,6 +41,7 @@ def metadata_key_value(arg):
         key = "_" + mdtype.name
     return (key.lower(), value)
 
+
 class Application:
     def __init__(self):
         self.args = None

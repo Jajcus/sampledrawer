@@ -187,7 +187,6 @@ class TagIncludeQuery(SearchCondition):
     @classmethod
     def get_sql_group_query(cls, tag_queries, cond_number):
         included = set()
-        include_all = False
         for tag_query in tag_queries:
             if tag_query.tag_name == "/":
                 return NULL_SQL_QUERY
@@ -244,9 +243,9 @@ class TagExcludeQuery(SearchCondition):
         params = list(excluded)
         placeholders = ", ".join(["?"] * len(params))
         where = ("item.id NOT IN ("
-                    " SELECT item_id FROM item_tags, tags"
-                    " WHERE item_tags.tag_id = tags.id"
-                        " AND tags.name IN ({}))".format(placeholders))
+                 " SELECT item_id FROM item_tags, tags"
+                 " WHERE item_tags.tag_id = tags.id AND tags.name IN ({}))"
+                 .format(placeholders))
         return SQLQuery([], where, params)
 
 
@@ -282,8 +281,9 @@ class TagRequireQuery(SearchCondition):
         tables = ["item_tags itag{0}".format(cond_number),
                   "tags tag{0}".format(cond_number)]
         where = ("itag{0}.item_id = item.id"
-                    " AND itag{0}.tag_id = tag{0}.id"
-                    " AND tag{0}.name = ?".format(cond_number))
+                 " AND itag{0}.tag_id = tag{0}.id"
+                 " AND tag{0}.name = ?"
+                 .format(cond_number))
         params = [self.tag_name]
         return SQLQuery(tables, where, params)
 
@@ -400,7 +400,6 @@ class CompletionQuery(SearchQuery):
     @classmethod
     def from_string(cls, query_text):
         logger.debug("Considering %r for completion", query_text)
-        got_it = False
         base_query = None
         to_complete = None
         if '"' in query_text:
