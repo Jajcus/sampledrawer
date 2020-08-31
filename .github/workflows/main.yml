@@ -27,6 +27,8 @@ jobs:
           pip install tox
       - name: Install Qt5 dev tools
         run: sudo apt install qtbase5-dev-tools
+      - name: Install GIT LFS
+        run: git lfs install
       - name: Run Tox
         run: tox -e py,flake8
 

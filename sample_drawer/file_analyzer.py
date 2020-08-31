@@ -17,7 +17,13 @@ logger = logging.getLogger("file_analyzer")
 
 
 class FileKey:
-    """For reliably using filenames as keys in a cache."""
+    """For reliably using filenames as keys in a cache.
+
+    When hashed for the first time (e.g. used as a dictionary key) file stat will be checked
+    and used together with the absolute path for hashing and comparison. This
+    way a file modified on disk won't be considered to be the same as the one
+    stored in cache.
+    """
 
     def __init__(self, path):
         if isinstance(path, FileKey):
