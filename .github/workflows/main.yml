@@ -27,6 +27,8 @@ jobs:
           pip install tox
       - name: Install Qt5 dev tools
         run: sudo apt install qtbase5-dev-tools
+      - name: Install libsndfile
+        run: sudo apt install libsndfile1
       - name: Install GIT LFS
         run: git lfs install
       - name: Run Tox
