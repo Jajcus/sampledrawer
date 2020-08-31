@@ -102,9 +102,9 @@ class SearchQuery:
         conds = []
         for cond in self.conditions:
             parts = []
-            for part in condition.as_strings():
+            for part in cond.to_strings():
                 parts.append(quote(part))
-            conds.append("".join(cond_s))
+            conds.append("".join(parts))
         return " ".join(conds)
 
     def as_sql(self, columns=None, order_by="item.name", limit=100, workplace_id=None):
@@ -181,6 +181,9 @@ class TagIncludeQuery(SearchCondition):
             raise ValueError("Not a tag query: %r - bad tag name" % (query,))
         return cls(query[1:])
 
+    def to_strings(self):
+        return ["?", self.tag_name]
+
     @classmethod
     def get_sql_group_query(cls, tag_queries, cond_number):
         included = set()
@@ -224,6 +227,9 @@ class TagExcludeQuery(SearchCondition):
             raise ValueError("Not a tag query: %r - bad tag name" % (query,))
         return cls(query[1:])
 
+    def to_strings(self):
+        return ["-", self.tag_name]
+
     @classmethod
     def get_sql_group_query(cls, tag_queries, cond_number):
         excluded = set()
@@ -265,6 +271,9 @@ class TagRequireQuery(SearchCondition):
         if not VALID_TAG_RE.match(query[1:]):
             raise ValueError("Not a tag query: %r - bad tag name" % (query,))
         return cls(query[1:])
+
+    def to_strings(self):
+        return ["+", self.tag_name]
 
     def get_sql_query(self, cond_number):
         if self.tag_name == "/":
@@ -308,6 +317,9 @@ class MetadataQuery(SearchCondition):
             raise ValueError("Not a metadata query: %r - invalid key" % (query,))
 
         return cls(key, value, oper)
+
+    def to_strings(self):
+        return [self.key, self.oper, self.value]
 
     def get_sql_query(self, cond_number):
         params = []
@@ -356,6 +368,9 @@ class MiscQuery(SearchCondition):
     @classmethod
     def from_string(cls, query):
         return cls(query)
+
+    def to_strings(self):
+        return [self.query]
 
     @classmethod
     def get_sql_group_query(cls, queries, cond_number):
@@ -435,11 +450,14 @@ class CompletionQueryCondition(SearchCondition):
         self.query = query
 
     def __repr__(self):
-        return "<MiscQuery {!r}>".format(self.query)
+        return "<CompletionQueryCondition {!r}>".format(self.query)
 
     @classmethod
     def from_string(cls, query):
         return cls(query)
+
+    def to_strings(self):
+        return [self.query]
 
     def get_sql_query(self, cond_number):
         query_string = quote(self.query + "*")
