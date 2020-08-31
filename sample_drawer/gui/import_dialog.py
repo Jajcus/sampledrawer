@@ -4,15 +4,14 @@ import os
 
 from functools import partial
 
-from PySide2.QtCore import Qt, QFile, QItemSelection, QRegExp, QTimer
+from PySide2.QtCore import Qt, QFile, QRegExp, QTimer
 from PySide2.QtUiTools import QUiLoader
 from PySide2.QtWidgets import QDialogButtonBox, QAbstractItemView
-from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem, QRegExpValidator
+from PySide2.QtGui import QStandardItemModel, QStandardItem, QRegExpValidator
 
 from ..library import LibraryConflictError
 
 from . import __path__ as PKG_PATH
-
 
 # Qt regexp, must match Python regexp VALID_TAG_RE from metadata.py
 TAG_LIST_REGEXP = r"^(((/[\w-]+)*/)?[\w-]+)?([ ;,]+((/[\w-]+)*/)?[\w-]+)*$"
@@ -21,6 +20,7 @@ TAG_LIST_REGEXP = r"^(((/[\w-]+)*/)?[\w-]+)?([ ;,]+((/[\w-]+)*/)?[\w-]+)*$"
 logger = logging.getLogger("import_dialog")
 
 UI_FILENAME = os.path.join(PKG_PATH[0], "import_dialog.ui")
+
 
 class ImportDialog:
     def __init__(self, main_window):
@@ -63,8 +63,8 @@ class ImportDialog:
         buttons.rejected.connect(self.cancel_clicked)
         combo = self.rewrite_rules_combo = self.window.rewrite_rules_combo
         rules = [(rule["name"], key)
-                    for key, rule
-                    in self.app.config["rewrite_rules"].items()]
+                 for key, rule
+                 in self.app.config["rewrite_rules"].items()]
         rules.sort()
         for label, key in rules:
             combo.addItem(label, key)
@@ -173,8 +173,8 @@ class ImportDialog:
                 try:
                     self.app.library.import_file(metadata)
                 except LibraryConflictError as err:
-                    logger.info("File %r (%r) already in the library, known as %r."
-                            " Ignoring it.", path, err.md5, err.existing_name)
+                    logger.info("File %r (%r) already in the library, known as %r. Ignoring it.",
+                                path, err.md5, err.existing_name)
         finally:
             self.app.qapp.restoreOverrideCursor()
             self.window.close()
@@ -184,4 +184,3 @@ class ImportDialog:
         self.exitting = True
         self.app.qapp.restoreOverrideCursor()
         self.window.close()
-

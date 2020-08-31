@@ -1,12 +1,11 @@
 
 import logging
-import os
 
-from PySide2.QtCore import Slot, Signal, Qt, QObject
-from PySide2.QtCore import QAbstractItemModel, QModelIndex
+from PySide2.QtCore import Slot, Qt, QObject
 from PySide2.QtGui import QStandardItemModel, QStandardItem
 
 logger = logging.getLogger("metadata_browser")
+
 
 class MetadataBrowser(QObject):
     def __init__(self, metadata_view):
@@ -27,7 +26,7 @@ class MetadataBrowser(QObject):
             self.model.setRowCount(len(self.metadata))
             for i, key in enumerate(sorted(metadata)):
                 fmt_key, fmt_value = metadata.get_formatted(key)
-                self.model.setItem(i, 0, QStandardItem(fmt_key));
-                self.model.setItem(i, 1, QStandardItem(fmt_value));
+                self.model.setItem(i, 0, QStandardItem(fmt_key))
+                self.model.setItem(i, 1, QStandardItem(fmt_value))
         else:
             self.model.setRowCount(0)

@@ -8,7 +8,9 @@ from PySide2.QtWidgets import QApplication
 
 logger = logging.getLogger("signal_handler")
 
-# Hack from: https://stackoverflow.com/questions/35305920/pyqt-core-application-doesnt-return-to-caller-on-quit
+
+# Hack from:
+# https://stackoverflow.com/questions/35305920/pyqt-core-application-doesnt-return-to-caller-on-quit
 # should really be properly implemented in Qt itself
 class SignalHandler(QObject):
     """Handler responsible for handling OS signals (SIGINT, SIGTERM, etc.).
@@ -86,4 +88,3 @@ class SignalHandler(QObject):
         logger.info("Signal %i received", signum)
         logger.debug("stack:", stack_info=frame)
         QApplication.quit()
-

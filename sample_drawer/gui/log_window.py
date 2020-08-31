@@ -25,10 +25,12 @@ LEVELS = [
 ROLE_LEVEL = Qt.UserRole + 1
 MSG_COLUMN = 0
 
+
 class LogHandler(logging.Handler):
     def __init__(self, window):
         self._window = weakref.ref(window)
         logging.Handler.__init__(self)
+
     def emit(self, record):
         if record.name == logger.name:
             # ignore logs from this module
@@ -47,22 +49,26 @@ class LogHandler(logging.Handler):
         except Exception:
             self.handleError(record)
 
+
 class LogFilterProxyModel(QSortFilterProxyModel):
     def __init__(self, parent, level):
         self._level = level
         QSortFilterProxyModel.__init__(self, parent)
+
     def filterAcceptsRow(self, row, parent):
         model = self.sourceModel()
-        index = model.index(row, MSG_COLUMN, parent);
+        index = model.index(row, MSG_COLUMN, parent)
         item = model.itemFromIndex(index)
         if item:
             item_level = item.data(ROLE_LEVEL)
             return item_level >= self._level
         else:
             return False
+
     def set_level(self, level):
         self._level = level
         self.invalidateFilter()
+
 
 class LogWindow:
     def __init__(self, app):
@@ -122,9 +128,8 @@ class LogWindow:
             if self.window.isVisible():
                 self.view.repaint()
 
-
     def scroll_to_bottom(self):
-        index = self.proxy.index(self.proxy.rowCount() -1, 0)
+        index = self.proxy.index(self.proxy.rowCount() - 1, 0)
         self.view.scrollTo(index, QAbstractItemView.PositionAtBottom)
 
     def follow_toggled(self, enabled):

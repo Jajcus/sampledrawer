@@ -13,7 +13,7 @@ from .player import Player
 from ..metadata import Metadata
 from .file_analyzer import AsyncFileAnalyzer, FileKey
 from .metadata_browser import MetadataBrowser
-from .waveform import WaveformWidget, WaveformCursorWidget
+from .waveform import WaveformWidget
 from .workplace import WorkplaceItems
 from .import_dialog import ImportDialog
 
@@ -29,11 +29,13 @@ QTreeView:!active {{
     }}
 """
 
+
 def color_to_qss(color):
     return "rgb({}, {}, {}, {})".format(color.red(),
                                         color.green(),
                                         color.blue(),
                                         color.alpha())
+
 
 class UiLoader(QUiLoader):
     def createWidget(self, className, parent=None, name=""):
@@ -43,14 +45,18 @@ class UiLoader(QUiLoader):
             return widget
         return super(UiLoader, self).createWidget(className, parent, name)
 
+
 class CloseEventFilter(QObject):
     closing = Signal()
+
     def __init__(self, parent):
         QObject.__init__(self, parent)
+
     def eventFilter(self, obj, event):
         if event.type() == QEvent.Close:
             self.closing.emit()
         return False
+
 
 class MainWindow:
     def __init__(self, app):

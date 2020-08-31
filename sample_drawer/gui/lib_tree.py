@@ -1,15 +1,14 @@
 
 import logging
-import os
 
-from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QItemSelectionModel
-from PySide2.QtWidgets import QApplication
+from PySide2.QtCore import Slot, QObject, QItemSelection, Qt, QItemSelectionModel
 from PySide2.QtWidgets import QAbstractItemView
 from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem
 
 from ..search import TagIncludeQuery, TagRequireQuery, TagExcludeQuery
 
 logger = logging.getLogger("lib_tree")
+
 
 class LibraryTree(QObject):
     def __init__(self, app, window):
@@ -94,5 +93,3 @@ class LibraryTree(QObject):
     @Slot(QItemSelection)
     def selection_changed(self, selection):
         logger.debug("selection changed")
-
-

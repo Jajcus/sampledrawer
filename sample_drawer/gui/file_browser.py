@@ -1,11 +1,10 @@
 
 import logging
 import os
-import typing
 
-from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QDir, QFileInfo, QModelIndex
+from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QDir, QFileInfo, \
+                           QModelIndex
 from PySide2.QtGui import QIcon
-from PySide2.QtWidgets import QApplication
 from PySide2.QtWidgets import QFileSystemModel, QAbstractItemView
 from PySide2.QtWidgets import QFileIconProvider
 
@@ -18,19 +17,23 @@ NAME_FILTERS = [
         ("All Files", ["*"]),
         ]
 
+
 class FileIconProvider(QFileIconProvider):
     def __init__(self):
         self._audio_icon = QIcon.fromTheme("audio-x-generic")
         super().__init__()
+
     def icon(self, info: QFileInfo):
         if info.suffix() in KNOWN_EXTENSIONS:
             return self._audio_icon
         else:
             return super().icon(info)
 
+
 class FileBrowser(QObject):
     file_selected = Signal(str)
     file_activated = Signal(str)
+
     def __init__(self, app, window):
         QObject.__init__(self)
         self.app = app

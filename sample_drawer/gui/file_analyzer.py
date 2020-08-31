@@ -1,5 +1,4 @@
 
-import os
 import logging
 
 from functools import partial
@@ -11,6 +10,7 @@ from ..file_analyzer import FileAnalyzer, FileKey
 from ..metadata import Metadata
 
 logger = logging.getLogger("gui.file_analyzer")
+
 
 class FileAnalyzerWorker(QRunnable, FileAnalyzer):
 
@@ -37,6 +37,7 @@ class FileAnalyzerWorker(QRunnable, FileAnalyzer):
         finished = Signal(dict)
         error = Signal(str)
 
+
 class AsyncFileAnalyzer(QObject):
     def __init__(self):
         QObject.__init__(self)
@@ -44,7 +45,7 @@ class AsyncFileAnalyzer(QObject):
         self._waiting_for_info = {}
         self._cache = LRUCache(maxsize=10)
 
-    def request_waveform(self, path, callback = None):
+    def request_waveform(self, path, callback=None):
         if isinstance(path, FileKey):
             file_key = path
         else:
@@ -54,13 +55,15 @@ class AsyncFileAnalyzer(QObject):
             waveform = file_info.get("waveform")
             callback(file_key, waveform)
             return
+
         def our_callback(path, file_info):
             if file_info:
                 waveform = file_info.get("waveform")
                 callback(path, waveform)
+
         self._request_info(path, callback=our_callback)
 
-    def request_file_metadata(self, path, callback = None):
+    def request_file_metadata(self, path, callback=None):
         if isinstance(path, FileKey):
             file_key = path
         else:
@@ -70,12 +73,14 @@ class AsyncFileAnalyzer(QObject):
             metadata = Metadata.from_file_info(file_info)
             callback(file_key, metadata)
             return
+
         def our_callback(path, file_info):
             if file_info:
                 metadata = Metadata.from_file_info(file_info)
             else:
                 metadata = None
             callback(path, metadata)
+
         self._request_info(path, callback=our_callback)
 
     def _request_info(self, file_key, callback):

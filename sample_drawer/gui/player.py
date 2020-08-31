@@ -1,14 +1,15 @@
 
 import logging
 
-from PySide2.QtCore import Slot, QByteArray, QDataStream, QTimer
+from PySide2.QtCore import Slot, QByteArray
 from PySide2.QtGui import QIcon
-from PySide2.QtMultimedia import QAudioDeviceInfo, QAudioDecoder, QAudioFormat, QAudioOutput, QAudio
+from PySide2.QtMultimedia import QAudioDeviceInfo, QAudioDecoder, QAudioOutput, QAudio
 
 from cffi import FFI
 
 ffi = FFI()
 logger = logging.getLogger("player")
+
 
 class Player:
     def __init__(self, app, window):
@@ -210,7 +211,6 @@ class Player:
                 self.starting = False
         else:
             logger.debug("Ignoring Play/Pause in unexpected state")
-
 
     @Slot()
     def stop_clicked(self):

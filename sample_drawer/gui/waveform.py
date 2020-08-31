@@ -3,7 +3,7 @@ import logging
 
 from PySide2.QtCore import Qt, QRect, QSize, QRectF
 from PySide2.QtWidgets import QWidget
-from PySide2.QtGui import QColor, QPainter, QBrush, QPen, QFont
+from PySide2.QtGui import QColor, QPainter, QBrush, QPen
 
 from ..dsp import WAVEFORM_RESOLUTION
 
@@ -15,6 +15,7 @@ COLOR_CURSOR = (255, 0, 0, 128)
 CURSOR_WIDTH = 3
 
 logger = logging.getLogger("waveform")
+
 
 class WaveformCursorWidget(QWidget):
     def __init__(self, *args, **kwargs):
@@ -34,6 +35,7 @@ class WaveformCursorWidget(QWidget):
         pen.setColor(QColor(*COLOR_CURSOR))
         painter.setPen(pen)
         painter.drawRect(0, 0, width - 1, height - 1)
+
 
 class WaveformWidget(QWidget):
     def __init__(self, *args, **kwargs):
@@ -75,17 +77,16 @@ class WaveformWidget(QWidget):
         pen.setColor(QColor(*COLOR_FRAME))
         painter.setPen(pen)
         font = painter.font()
-        font.setPixelSize(height / 6);
-        painter.setFont(font);
+        font.setPixelSize(height / 6)
+        painter.setFont(font)
         painter.fillRect(1, 1, width - 2, height - 2, brush)
 
         if self._waveform is not None:
             color = QColor(*COLOR_WAVE)
             for i, (w_min, w_max) in enumerate(self._waveform):
-                x1 = x2 = i
                 y1 = max((height - w_max * height) / 2, 0)
                 y2 = min((height - w_min * height) / 2, height)
-                rect = QRectF(x1, y1, 1, y2 - y1)
+                rect = QRectF(i, y1, 1, y2 - y1)
                 painter.fillRect(rect, color)
 
         painter.drawRect(0, 0, width - 1, height - 1)

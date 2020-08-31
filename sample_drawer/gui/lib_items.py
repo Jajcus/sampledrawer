@@ -1,11 +1,12 @@
 
 import logging
-import os
 import json
+import socket
 
 from urllib.parse import urlunsplit
 
-from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QMimeData, QByteArray, QModelIndex
+from PySide2.QtCore import Slot, Signal, QObject, QItemSelection, Qt, QMimeData, QByteArray, \
+                           QModelIndex
 from PySide2.QtWidgets import QAbstractItemView, QCompleter
 from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem
 
@@ -23,6 +24,7 @@ MIMETYPES = {
         "AIFF": "audio/x-aiff",
         }
 
+
 class ItemMimeData(QMimeData):
     def __init__(self, app, items):
         QMimeData.__init__(self)
@@ -30,8 +32,10 @@ class ItemMimeData(QMimeData):
         self._items = [item.data() for item in items]
         self._paths = None
         self._formats = None
+
     def get_items(self):
         return self._items
+
     def formats(self):
         if self._formats is not None:
             return self._formats
@@ -44,8 +48,10 @@ class ItemMimeData(QMimeData):
         result.append("text/plain")
         self._formats = result
         return result
+
     def hasFormat(self, fmt):
         return fmt in self.formats()
+
     def retrieveData(self, mime_type, var_type):
         logger.debug("retrieveData(%r, %r)", mime_type, var_type)
         if mime_type not in self.formats():
@@ -81,18 +87,23 @@ class ItemMimeData(QMimeData):
                 data = data_f.read()
             return QByteArray.fromRawData(data)
 
+
 class ItemModel(QStandardItemModel):
     def __init__(self, app):
         QStandardItemModel.__init__(self)
         self._app = app
+
     def mimeData(self, indexes):
         logger.debug("mimeData(%r)", indexes)
-        items = [ self.itemFromIndex(index) for index in indexes ]
+        items = [self.itemFromIndex(index) for index in indexes]
         return ItemMimeData(self._app, items)
+
     def supportedDragActions(self):
         return Qt.CopyAction
+
     def supportedDropActions(self):
         return Qt.CopyAction
+
     def canDropMimeData(self, data, action, row, column, parent):
         logger.debug("canDropMimeData%r", (data, action, row, column, parent))
         if action != Qt.CopyAction:
@@ -105,6 +116,7 @@ class ItemModel(QStandardItemModel):
         if "text/uri-list" in data.formats():
             return True
         return False
+
     def dropMimeData(self, data, action, row, column, parent):
         if action != Qt.CopyAction:
             logger.debug("Not a copy - rejecting")
@@ -126,9 +138,11 @@ class ItemModel(QStandardItemModel):
             return True
         return False
 
+
 class LibraryItems(QObject):
     item_selected = Signal(object)
     item_activated = Signal(object)
+
     def __init__(self, app, window, lib_tree):
         QObject.__init__(self)
         self.app = app

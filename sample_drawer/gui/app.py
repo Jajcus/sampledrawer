@@ -17,6 +17,7 @@ RESOURCE_FILENAMES = [os.path.join(PKG_PATH[0], "resources.rcc"),
 
 logger = logging.getLogger("gui.app")
 
+
 class GUIApplication:
     def __init__(self, app):
         self.started = False
@@ -32,7 +33,8 @@ class GUIApplication:
             if os.path.exists(path):
                 logger.debug("Loading resources from %r", path)
                 QResource.registerResource(path)
-        QIcon.setThemeSearchPaths(QIcon.themeSearchPaths() + ["/home/jajcus/git/sampledrawer/icons"])
+        QIcon.setThemeSearchPaths(QIcon.themeSearchPaths()
+                                  + ["/home/jajcus/git/sampledrawer/icons"])
         logger.debug("Icon search path: %r", QIcon.themeSearchPaths())
         QIcon.setFallbackSearchPaths([":icons/"] + QIcon.fallbackSearchPaths())
         logger.debug("Icon fallback path: %r", QIcon.fallbackSearchPaths())
@@ -50,8 +52,6 @@ class GUIApplication:
         self.started = True
         try:
             return self.qapp.exec_()
-        except Exitting:
-            pass
         finally:
             self.started = False
 

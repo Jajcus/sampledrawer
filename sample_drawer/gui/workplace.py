@@ -1,18 +1,20 @@
 
 import logging
 import os
+import socket
 
 from functools import partial
 from urllib.parse import urlunsplit
 
-from PySide2.QtCore import Slot, Signal, QTimer, QObject, QItemSelection, Qt, QMimeData, QByteArray, QModelIndex
-from PySide2.QtWidgets import QAbstractItemView, QCompleter, QShortcut
+from PySide2.QtCore import Slot, Signal, QObject, QItemSelection, Qt, QMimeData, \
+        QByteArray, QModelIndex
+from PySide2.QtWidgets import QAbstractItemView, QShortcut
 from PySide2.QtGui import QStandardItemModel, QIcon, QStandardItem, QKeySequence
 
-from ..search import SearchQuery, CompletionQuery
 from .lib_items import MIMETYPES, ItemMimeData
 
 logger = logging.getLogger("gui.workplace")
+
 
 class WorkplaceItemMimeData(QMimeData):
     def __init__(self, app, items):
@@ -21,6 +23,7 @@ class WorkplaceItemMimeData(QMimeData):
         self._items = [item.data() for item in items]
         self._paths = None
         self._formats = None
+
     def formats(self):
         if self._formats is not None:
             return self._formats
@@ -33,8 +36,10 @@ class WorkplaceItemMimeData(QMimeData):
         result.append("text/plain")
         self._formats = result
         return result
+
     def hasFormat(self, fmt):
         return fmt in self.formats()
+
     def retrieveData(self, mime_type, var_type):
         logger.debug("retrieveData(%r, %r)", mime_type, var_type)
         if mime_type not in self.formats():
@@ -64,19 +69,24 @@ class WorkplaceItemMimeData(QMimeData):
                 data = data_f.read()
             return QByteArray.fromRawData(data)
 
+
 class ItemModel(QStandardItemModel):
     def __init__(self, workplace_items):
         QStandardItemModel.__init__(self)
         self._workplace_items = workplace_items
         self._app = workplace_items.app
+
     def mimeData(self, indexes):
         logger.debug("mimeData(%r)", indexes)
-        items = [ self.itemFromIndex(index) for index in indexes ]
+        items = [self.itemFromIndex(index) for index in indexes]
         return WorkplaceItemMimeData(self._app, items)
+
     def supportedDragActions(self):
         return Qt.CopyAction
+
     def supportedDropActions(self):
         return Qt.CopyAction
+
     def canDropMimeData(self, data, action, row, column, parent):
         logger.debug("canDropMimeData%r", (data, action, row, column, parent))
         if action != Qt.CopyAction:
@@ -89,6 +99,7 @@ class ItemModel(QStandardItemModel):
         if "text/uri-list" in data.formats():
             return True
         return False
+
     def dropMimeData(self, data, action, row, column, parent):
         if action != Qt.CopyAction:
             logger.debug("Not a copy - rejecting")
@@ -129,9 +140,11 @@ class WorkplaceFolder:
         self.path = path
         self.expanded = expanded
 
+
 class WorkplaceItems(QObject):
     item_selected = Signal(object)
     item_activated = Signal(object)
+
     def __init__(self, app, window, file_analyzer):
         QObject.__init__(self)
         self.app = app
@@ -252,10 +265,9 @@ class WorkplaceItems(QObject):
         if not indexes:
             logger.warning("Nothing to delete")
             return
-        to_delete = []
         for index in indexes:
             item = self.model.itemFromIndex(index)
-            deleted = self.workplace.delete_item(item.data())
+            self.workplace.delete_item(item.data())
         self.get_items()
 
     def import_urls(self, urls, folder=""):
@@ -263,8 +275,7 @@ class WorkplaceItems(QObject):
             if not url.isLocalFile():
                 logger.warning("Ignoring %r not a file", url.toString())
                 continue
-            if (url.host() and url.host() != "localhost"
-                    and url.host() != socket.gethostname()):
+            if (url.host() and url.host() != "localhost" and url.host() != socket.gethostname()):
                 logger.warning("Ignoring %r not a local file", url.toString())
                 continue
             path = url.path()
@@ -276,10 +287,12 @@ class WorkplaceItems(QObject):
                 continue
             callback = partial(self._import_file, folder=folder)
             self.file_analyzer.request_file_metadata(path, callback)
+
     def _import_file(self, file_key, metadata, folder=""):
         logger.debug("Got metadata for import: %r", metadata)
         self.workplace.import_file(metadata, folder=folder)
         self.get_items()
+
     def _import_dir(self, path, parent_folder=""):
         logger.debug("Importing dir: %r", path)
         parent_path = os.path.dirname(path)
@@ -294,6 +307,7 @@ class WorkplaceItems(QObject):
                 full_path = os.path.join(dirpath, filename)
                 importer = partial(self._import_file, folder=folder)
                 self.file_analyzer.request_file_metadata(full_path, importer)
+
     def import_lib_items(self, items, folder=""):
         for metadata in items:
             self.workplace.import_item(metadata, folder=folder)
