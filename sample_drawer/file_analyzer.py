@@ -111,7 +111,7 @@ class FileAnalyzer:
 
 class CachedFileAnalyzer(FileAnalyzer):
     def __init__(self):
-        self._cache = LRUCache(maxsize=10)
+        self._cache = LRUCache()
 
     def get_file_info(self, path):
         if not isinstance(path, FileKey):
