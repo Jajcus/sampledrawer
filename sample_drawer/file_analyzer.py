@@ -3,10 +3,7 @@ import hashlib
 import os
 import logging
 
-try:
-    from functools import cached_property
-except ImportError:
-    cached_property = property
+from functools import cached_property
 
 from soundfile import SoundFile
 
