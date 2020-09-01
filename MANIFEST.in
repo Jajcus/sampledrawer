@@ -1,6 +1,7 @@
 include LICENSE
 include resources.qrc
 include *.rst
-include tox.ini
-include sample_drawer/gui/*.ui
 include sample_drawer/gui/resources.rcc
+include sample_drawer/gui/*.ui
+include sample_drawer/schema.sql
+include tox.ini
