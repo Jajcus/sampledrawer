@@ -1,7 +1,7 @@
 
 CREATE TABLE db_meta (
         id INTEGER PRIMARY KEY,
-        version INTEGER
+        version TEXT
 );
 
 CREATE TABLE workplaces (

@@ -28,7 +28,7 @@ class LibraryConflictError(LibraryError):
         return self.args[2]
 
 
-DATABASE_VERSION = 0
+DATABASE_VERSION = "0"
 
 
 class Library:
@@ -109,9 +109,9 @@ class Library:
             logging.error("Invalid database: not db_meta data")
             self.app.exit(1)
         version = row[0]
-        if version != DATABASE_VERSION:
+        if str(version) != str(DATABASE_VERSION):
             logging.error("Invalid database version: %i (%i expected)",
-                          version, DATABASE_VERSION)
+                          version, (DATABASE_VERSION))
             self.app.exit(1)
         self.db = db
 
