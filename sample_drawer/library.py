@@ -53,6 +53,9 @@ class Library:
 
     def close(self):
         self.remove_tmp_dir()
+        if self.db:
+            self.db.close()
+            self.db = None
 
     def make_tmp_dir(self):
         # under base dir, so it is the same filesystem and we can hard-link there
