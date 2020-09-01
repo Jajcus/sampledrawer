@@ -220,8 +220,16 @@ class Application:
             return self.gui.start()
         finally:
             self.gui = None
+            if self.library:
+                self.library.close()
+                self.workplace = None
+                self.library = None
 
     def exit(self, code):
+        if self.library:
+            self.library.close()
+            self.workplace = None
+            self.library = None
         sys.exit(code)
 
 

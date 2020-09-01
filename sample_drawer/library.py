@@ -49,6 +49,9 @@ class Library:
         self.make_tmp_dir()
 
     def __del__(self):
+        self.close()
+
+    def close(self):
         self.remove_tmp_dir()
 
     def make_tmp_dir(self):
