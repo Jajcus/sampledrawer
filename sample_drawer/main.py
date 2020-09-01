@@ -23,6 +23,23 @@ LOG_FORMAT = "%(asctime)-15s %(thread)d %(message)s"
 logger = logging.getLogger("main")
 
 
+class AppDirs(appdirs.AppDirs):
+    """Extends appdirs.AppDirs to allow overriding specific directories."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._overrides = {}
+
+    def __getattribute__(self, key):
+        overrides = super().__getattribute__("_overrides")
+        if key in overrides:
+            return overrides[key]
+        else:
+            return super().__getattribute__(key)
+
+    def override(self, attribute, value):
+        self._overrides[attribute] = value
+
+
 def metadata_key_value(arg):
     if "=" not in arg:
         raise argparse.ArgumentTypeError("'=' missing")
@@ -48,9 +65,10 @@ class Application:
         self.main_window = None
         self.library = None
         self.gui = None
-        self.appdirs = appdirs.AppDirs(APP_NAME, APP_AUTHOR)
+        self.appdirs = AppDirs(APP_NAME, APP_AUTHOR)
 
         self.parse_args()
+
         self.setup_logging()
 
         self.config = Config()
@@ -88,7 +106,11 @@ class Application:
                             help='Verify library database consistency')
         parser.add_argument('--audio-device',
                             help='Select audio device to use.')
+        parser.add_argument('--data-dir',
+                            help='Override default data directory (for testing).')
         self.args = parser.parse_args()
+        if self.args.data_dir:
+            self.appdirs.override("user_data_dir", self.args.data_dir)
 
     def setup_logging(self):
         logging.basicConfig(level=self.args.debug_level,
