@@ -32,13 +32,15 @@ DATABASE_VERSION = "0"
 
 
 class Library:
-    def __init__(self, app):
+    def __init__(self, app, base_path=None):
         self.db = None
         self.tmp_dir = None
         self.app = app
-        self.base_path = os.path.join(app.appdirs.user_data_dir,
-                                      "library")
-        db_path = os.path.join(self.base_path, "database.db")
+        if base_path is None:
+            base_path = os.path.join(app.appdirs.user_data_dir,
+                                     "library")
+        self.base_path = base_path
+        db_path = os.path.join(base_path, "database.db")
         if os.path.exists(db_path):
             self.open_database(db_path)
         else:
