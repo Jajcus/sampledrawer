@@ -7,6 +7,7 @@ from unittest.mock import Mock
 import pytest
 
 from jajcus.sample_drawer.library import Library
+from jajcus.sample_drawer.search import SearchQuery
 
 
 @pytest.fixture
@@ -15,7 +16,7 @@ def library_factory(request, tmp_path_factory, shared_datadir):
     if marker is None:
         base_path = tmp_path_factory.mktemp("lib", True)
     else:
-        base_path = shared_datadir / marker.args[0]
+        base_path = shared_datadir / marker.args[0] / "library"
 
     def _library_factory():
         return Library(Mock(), base_path=base_path)
@@ -35,7 +36,9 @@ def test_create_new(library_factory):
     del library
     assert (base_path / "database.db").exists()
 
-    library_factory()
+    library = library_factory()
+    tags = list(library.get_tags())
+    assert tags == [("/", 0)]
 
 
 def test_tmp_dir_del(library_factory):
@@ -59,5 +62,38 @@ def test_tmp_dir_close(library_factory):
 
 
 @pytest.mark.library_template("testdb_ver_0")
-def test_open_existing(library_factory):
-    library_factory()
+def test_open_existing_testdb_ver_0(library_factory):
+    library = library_factory()
+    tags = list(library.get_tags())
+    tags.sort()
+    assert tags == [("/", 3), ("tag1", 2), ("tag2", 1)]
+    items = library.get_items(SearchQuery([]))
+    assert len(items) == 3
+    names = {item.name for item in items}
+    assert names == {"silence-1s", "sine-440Hz-half_scale-1s"}
+    formats = {item.format for item in items}
+    assert formats == {"FLAC", "WAV"}
+
+    query = SearchQuery.from_string("_name=silence-1s _format=WAV")
+    item = library.get_items(query)[0]
+    assert item.name == "silence-1s"
+    assert item.format == "WAV"
+    path = library.get_library_object_path(item)
+    assert os.path.isfile(path)
+
+    query = SearchQuery.from_string("_name=sine-440Hz-half_scale-1s _format=FLAC")
+    item = library.get_items(query)[0]
+    assert item.name == "sine-440Hz-half_scale-1s"
+    assert item.format == "FLAC"
+    path = library.get_library_object_path(item)
+    assert path != item.path  # item in the library
+    assert path.startswith(str(library_factory.base_path))
+    assert os.path.isfile(path)
+
+    query = SearchQuery.from_string("_name=sine-440Hz-half_scale-1s _format=WAV")
+    item = library.get_items(query)[0]
+    assert item.name == "sine-440Hz-half_scale-1s"
+    assert item.format == "WAV"
+    path = library.get_library_object_path(item)
+    assert path == item.path  # external item
+    assert not path.startswith(str(library_factory.base_path))

@@ -19,4 +19,4 @@ fi
 
 sampledrawer --data-dir "$dest_dir" --import "$data_dir/silence-1s.wav"
 sampledrawer --data-dir "$dest_dir" --import "$data_dir/sine-440Hz-half_scale-1s.flac" --tag tag1
-sampledrawer --data-dir "$dest_dir" --import "$data_dir/sine-440Hz-half_scale-1s.wav" --no-copy --tag tag1 --tag2
+sampledrawer --data-dir "$dest_dir" --import "$data_dir/sine-440Hz-half_scale-1s.wav" --no-copy --tag tag1 --tag tag2
