@@ -79,7 +79,7 @@ class Application:
     def parse_args(self):
         parser = argparse.ArgumentParser(
             description='Sample Drawer – audio sample browser and organizer.')
-        parser.set_defaults(debug_level=logging.INFO, metadata=[])
+        parser.set_defaults(debug_level=logging.INFO, metadata=[], copy=True)
         parser.add_argument('--root', action='store', dest='root',
                             help='For GUI: Display only this directory in filesystem browser'
                             ' For import: root for automatic categorization')
@@ -106,6 +106,8 @@ class Application:
                             help='Verify library database consistency')
         parser.add_argument('--audio-device',
                             help='Select audio device to use.')
+        parser.add_argument('--no-copy', action="store_false", dest="copy",
+                            help='Do not copy files to library on import.')
         parser.add_argument('--data-dir',
                             help='Override default data directory (for testing).')
         self.args = parser.parse_args()
@@ -182,7 +184,7 @@ class Application:
         for key, value in self.args.metadata:
             metadata[key] = value
         try:
-            self.library.import_file(metadata)
+            self.library.import_file(metadata, copy=self.args.copy)
         except LibraryConflictError as err:
             logger.info("File %r (%r) already in the library, known as %r."
                         " Ignoring it.", path, err.md5, err.existing_name)
