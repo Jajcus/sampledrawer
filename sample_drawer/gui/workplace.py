@@ -50,7 +50,7 @@ class WorkplaceItemMimeData(QMimeData):
         if paths is None:
             paths = []
             for item in self._items:
-                path = self._app.workplace.get_object_path(item)
+                path = self._app.workplace.get_item_path(item)
                 paths.append(path)
             self._paths = paths
 

@@ -132,7 +132,7 @@ class MainWindow:
     def item_selected(self, metadata):
         logger.debug("library item selected: %r", metadata)
         if metadata:
-            path = self.app.library.get_library_object_path(metadata)
+            path = self.app.library.get_item_path(metadata)
             self.window.waveform.set_duration(metadata.duration)
         else:
             path = None
@@ -145,7 +145,7 @@ class MainWindow:
         self.sample_player.file_selected(path)
 
     def item_activated(self, metadata):
-        path = self.app.library.get_library_object_path(metadata)
+        path = self.app.library.get_item_path(metadata)
         if path != self.current_file:
             self.item_selected(metadata)
         self.sample_player.play_pause_clicked()
@@ -157,7 +157,7 @@ class MainWindow:
             metadata = None
         logger.debug("workplace item selected: %r", metadata)
         if metadata:
-            path = self.app.workplace.get_object_path(metadata)
+            path = self.app.workplace.get_item_path(metadata)
             self.window.waveform.set_duration(metadata.duration)
         else:
             path = None
@@ -173,7 +173,7 @@ class MainWindow:
         if not isinstance(item, Metadata):
             return
         metadata = item
-        path = self.app.workplace.get_object_path(metadata)
+        path = self.app.workplace.get_item_path(metadata)
         if path != self.current_file:
             self.wp_item_selected(item)
         self.sample_player.play_pause_clicked()

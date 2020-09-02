@@ -117,7 +117,7 @@ class Library:
                                .format(version, DATABASE_VERSION))
         self.db = db
 
-    def get_library_object_path(self, metadata):
+    def get_item_path(self, metadata):
         if metadata.path:
             return metadata.path
         md5 = metadata.md5
@@ -247,7 +247,7 @@ class Library:
             logging.debug("running: %r with %r", query, values)
             cur.execute(query, values)
             if copy:
-                target_path = self.get_library_object_path(metadata)
+                target_path = self.get_item_path(metadata)
                 os.makedirs(os.path.dirname(target_path), exist_ok=True)
                 shutil.copy(path, target_path)
 

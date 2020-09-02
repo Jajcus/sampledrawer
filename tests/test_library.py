@@ -123,14 +123,14 @@ def test_open_existing_testdb_ver_0(library_factory):
     item = library.get_items(query)[0]
     assert item.name == "silence-1s"
     assert item.format == "WAV"
-    path = library.get_library_object_path(item)
+    path = library.get_item_path(item)
     assert os.path.isfile(path)
 
     query = SearchQuery.from_string("_name=sine-440Hz-half_scale-1s _format=FLAC")
     item = library.get_items(query)[0]
     assert item.name == "sine-440Hz-half_scale-1s"
     assert item.format == "FLAC"
-    path = library.get_library_object_path(item)
+    path = library.get_item_path(item)
     assert path != item.path  # item in the library
     assert path.startswith(str(library_factory.base_path))
     assert os.path.isfile(path)
@@ -139,6 +139,6 @@ def test_open_existing_testdb_ver_0(library_factory):
     item = library.get_items(query)[0]
     assert item.name == "sine-440Hz-half_scale-1s"
     assert item.format == "WAV"
-    path = library.get_library_object_path(item)
+    path = library.get_item_path(item)
     assert path == item.path  # external item
     assert not path.startswith(str(library_factory.base_path))

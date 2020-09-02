@@ -48,8 +48,8 @@ class Workplace:
                 logger.debug("Creating new workplace: %i", self.id)
         os.makedirs(self.base_path, exist_ok=True)
 
-    def get_object_path(self, metadata):
-        logger.debug("get_object_path(%r)", metadata)
+    def get_item_path(self, metadata):
+        logger.debug("get_item_path(%r)", metadata)
         if metadata.path:
             if os.path.isabs(metadata.path):
                 local_path = metadata.path
@@ -62,7 +62,7 @@ class Workplace:
 
         tmp_metadata = metadata.copy()
         tmp_metadata.path = None
-        path = self.library.get_library_object_path(tmp_metadata)
+        path = self.library.get_item_path(tmp_metadata)
         if os.path.exists(path):
             return path
 
@@ -125,7 +125,7 @@ class Workplace:
             path = self._import_item(source, metadata, folder, name)
             if copy:
                 os.makedirs(os.path.dirname(path), exist_ok=True)
-                shutil.copy(self.library.get_library_object_path(metadata),
+                shutil.copy(self.library.get_item_path(metadata),
                             path)
 
     def _import_item(self, source, metadata, folder="", name=None):

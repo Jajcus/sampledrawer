@@ -165,7 +165,7 @@ class LibraryVerifier:
             metadata = Metadata({"_md5": item_md5,
                                  "_path": path,
                                  "_format": file_format})
-            path = self.lib.get_library_object_path(metadata)
+            path = self.lib.get_item_path(metadata)
             if not os.path.exists(path):
                 question = RemoveItemWhenFileMissing(name, path)
                 yield from progress._send_error("Item #{} {!r} – file {!r} missing"
