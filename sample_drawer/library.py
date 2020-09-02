@@ -32,13 +32,11 @@ DATABASE_VERSION = "0"
 
 
 class Library:
-    def __init__(self, app, base_path=None):
+    def __init__(self, appdirs, base_path=None):
         self.db = None
         self.tmp_dir = None
-        self.app = app
         if base_path is None:
-            base_path = os.path.join(app.appdirs.user_data_dir,
-                                     "library")
+            base_path = os.path.join(appdirs.user_data_dir, "library")
         self.base_path = base_path
         db_path = os.path.join(base_path, "database.db")
         if os.path.exists(db_path):
@@ -90,8 +88,7 @@ class Library:
                            (DATABASE_VERSION,))
                 db.commit()
             except sqlite3.Error as err:
-                logger.error("Cannot open database %r: %s", db_path, err)
-                self.app.exit(1)
+                raise LibraryError("Cannot open database {!r}: {}".format(db_path, err))
         except:  # noqa: E722 (re-raised)
             try:
                 os.unlink(db_path)
@@ -111,16 +108,13 @@ class Library:
             db.commit()
             row = cur.fetchone()
         except sqlite3.Error as err:
-            logger.error("Cannot open database %r: %s", db_path, err)
-            self.app.exit(1)
+            raise LibraryError("Cannot open database {!r}: {}".format(db_path, err))
         if not row:
-            logging.error("Invalid database: not db_meta data")
-            self.app.exit(1)
+            raise LibraryError("Invalid database: not db_meta data")
         version = row[0]
         if str(version) != str(DATABASE_VERSION):
-            logging.error("Invalid database version: %i (%i expected)",
-                          version, (DATABASE_VERSION))
-            self.app.exit(1)
+            raise LibraryError("Unsupported database version: {!r} ({!r} expected)"
+                               .format(version, DATABASE_VERSION))
         self.db = db
 
     def get_library_object_path(self, metadata):

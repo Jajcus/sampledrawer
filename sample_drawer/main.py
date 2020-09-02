@@ -8,7 +8,7 @@ import sys
 import appdirs
 
 from .gui.app import GUIApplication
-from .library import Library, LibraryConflictError
+from .library import Library, LibraryError, LibraryConflictError
 from .library_verifier import LibraryVerifier
 from .workplace import Workplace
 from .file_analyzer import FileAnalyzer
@@ -73,7 +73,7 @@ class Application:
 
         self.config = Config()
         self.analyzer = FileAnalyzer()
-        self.library = Library(self)
+        self.library = Library(self.appdirs)
         self.workplace = Workplace(self, self.library, self.args.workplace)
 
     def parse_args(self):
@@ -236,5 +236,9 @@ class Application:
 
 
 def main():
-    app = Application()
+    try:
+        app = Application()
+    except LibraryError as err:
+        logger.error(err)
+        sys.exit(1)
     sys.exit(app.start())
