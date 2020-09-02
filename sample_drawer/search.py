@@ -350,7 +350,7 @@ class MetadataQuery(SearchCondition):
                       "LEFT JOIN custom_keys ck{i}".format(i=cond_number)]
             return SQLQuery(tables, "(" + " OR ".join(where) + ")", params)
         else:
-            return SQLQuery(None, where[0], params)
+            return SQLQuery([], where[0], params)
 
 
 SearchQuery.add_condition_type(MetadataQuery)
