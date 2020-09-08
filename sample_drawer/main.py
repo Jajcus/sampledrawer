@@ -104,6 +104,8 @@ class Application:
                             help='Select workplace to use')
         parser.add_argument('--check-db', action="store_true",
                             help='Verify library database consistency')
+        parser.add_argument('--audio-driver',
+                            help='Select audio device to use.')
         parser.add_argument('--audio-device',
                             help='Select audio device to use.')
         parser.add_argument('--no-copy', action="store_false", dest="copy",

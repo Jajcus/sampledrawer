@@ -9,6 +9,7 @@ from PySide2.QtWidgets import QApplication
 from .signal_handler import SignalHandler
 from .main_window import MainWindow
 from .log_window import LogWindow
+from ..audiodrivers import get_audio_driver
 
 from . import __path__ as PKG_PATH
 
@@ -43,6 +44,7 @@ class GUIApplication:
         self.qapp.setWindowIcon(QIcon(":icons/sampledrawer.svg"))
 
     def start(self):
+        self.audio_driver = get_audio_driver(self.args)
         self.log_window = LogWindow(self)
         self.main_window = MainWindow(self)
         self.main_window.show()
