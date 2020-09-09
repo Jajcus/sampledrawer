@@ -60,6 +60,8 @@ class Player:
         self.window.play_btn.setEnabled(True)
 
     def play_pause_clicked(self):
+        if not self.driver:
+            return
         logger.debug("Play/Pause clicked")
         if self.driver.audio_state == AudioState.PLAYING:
             logger.debug("pausing")
@@ -76,4 +78,6 @@ class Player:
             logger.debug("Ignoring Play/Pause in unexpected state")
 
     def stop_clicked(self):
+        if not self.driver:
+            return
         self.rewind()

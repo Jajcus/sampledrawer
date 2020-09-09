@@ -24,7 +24,13 @@ def get_audio_driver(args=None):
     load_drivers()
 
     if args and args.audio_driver:
-        driver = AudioDriver.registered_drivers[args.audio_driver]()
+        try:
+            driver = AudioDriver.registered_drivers[args.audio_driver]()
+        except KeyError:
+            logger.warning("Audio driver %r not found.", args.audio_driver)
+            logger.info("Available audio drivers: %s",
+                        ", ".join(AudioDriver.registered_drivers.keys()))
+            return None
     else:
         for name, cls in AudioDriver.registered_drivers.items():
             try:
@@ -33,7 +39,7 @@ def get_audio_driver(args=None):
             except AudioDriverError as err:
                 logger.debug("Cannot initialize audio driver %r: %s", err)
         else:
-            logger.warning("Could not find any audio driver!")
+            logger.warning("Could not load any audio driver!")
             return None
     logger.debug("Selected driver: %r", driver)
     return driver

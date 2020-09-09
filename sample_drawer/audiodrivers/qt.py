@@ -25,7 +25,7 @@ class QtAudioDriver(AudioDriver):
             try:
                 device = available_devices[args.audio_device]
             except KeyError:
-                logger.error("Unknown audio device: %r", self.app.args.audio_device)
+                logger.error("Unknown audio device: %r", args.audio_device)
                 logger.info("Available devices:")
                 for device_name in available_devices:
                     logger.info("    %r", device_name)
