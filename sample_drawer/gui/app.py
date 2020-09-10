@@ -9,7 +9,7 @@ from PySide2.QtWidgets import QApplication
 from .signal_handler import SignalHandler
 from .main_window import MainWindow
 from .log_window import LogWindow
-from ..audiodrivers import get_audio_driver
+from ..audiodrivers import get_audio_driver, AudioDriverError
 
 from . import __path__ as PKG_PATH
 
@@ -30,6 +30,7 @@ class GUIApplication:
         self.analyzer = app.analyzer
         logging.debug("qt_argv: %r", self.args.qt_argv)
         self.qapp = QApplication(self.args.qt_argv)
+        self.qapp.setApplicationName("Sample Drawer")
         for path in RESOURCE_FILENAMES:
             if os.path.exists(path):
                 logger.debug("Loading resources from %r", path)
@@ -44,7 +45,11 @@ class GUIApplication:
         self.qapp.setWindowIcon(QIcon(":icons/sampledrawer.svg"))
 
     def start(self):
-        self.audio_driver = get_audio_driver(self.args)
+        try:
+            self.audio_driver = get_audio_driver(self.args)
+        except AudioDriverError as err:
+            logger.error("Audio driver initialization error: %s", err)
+            return 1
         self.log_window = LogWindow(self)
         self.main_window = MainWindow(self)
         self.main_window.show()

@@ -4,7 +4,7 @@ import logging
 
 from .driver import AudioDriver, AudioDriverError, AudioState  # noqa: F401
 
-DRIVER_MODULES = ["qt"]
+DRIVER_MODULES = ["gstreamer", "qt"]
 
 logger = logging.getLogger("audiodrivers")
 
@@ -25,7 +25,7 @@ def get_audio_driver(args=None):
 
     if args and args.audio_driver:
         try:
-            driver = AudioDriver.registered_drivers[args.audio_driver]()
+            driver = AudioDriver.registered_drivers[args.audio_driver](args)
         except KeyError:
             logger.warning("Audio driver %r not found.", args.audio_driver)
             logger.info("Available audio drivers: %s",
