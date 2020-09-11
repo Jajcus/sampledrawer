@@ -6,7 +6,7 @@ import threading
 import gi; gi.require_version('Gst', '1.0')  # noqa: E702 prevent E402 in subsequent imports
 from gi.repository import Gst, GLib
 
-from .driver import AudioState, AudioDriver, AudioDriverError
+from .driver import AudioState, PositionPollingAudioDriver, AudioDriverError
 
 logger = logging.getLogger("audiodrivers.gstreamer")
 
@@ -26,7 +26,7 @@ def _get_gst_sinks():
     return result
 
 
-class GStreamerAudioDriver(AudioDriver):
+class GStreamerAudioDriver(PositionPollingAudioDriver):
     driver_name = "gstreamer"
 
     def __init__(self, args=None):
@@ -40,7 +40,7 @@ class GStreamerAudioDriver(AudioDriver):
 
         logger.debug("GStreamerAudioDriver.__init__(args=%r)", args)
 
-        AudioDriver.__init__(self, args)
+        PositionPollingAudioDriver.__init__(self, args)
 
         # initialize GLib application name if not reasonably initialized yet
         # this will be used as client name in Jack and PulseAudio sinks
@@ -169,6 +169,14 @@ class GStreamerAudioDriver(AudioDriver):
             err, debug = message.parse_error()
             logger.error("%s: %s\n" % (err, debug))
         return True
+
+    def get_position(self):
+        if not self._pipeline:
+            return 0.0
+        ok, pos = self._pipeline.query_position(Gst.Format.TIME)
+        if ok:
+            return pos / 1000000000.0
+        return 0.0
 
     def set_source(self, filename):
         super().set_source(filename)

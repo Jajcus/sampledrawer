@@ -47,8 +47,14 @@ class AudioDriver:
         """Set path to the file to play."""
         self.source = filename
 
-    def set_position(self, position):
+    def get_position(self):
+        """Get current stream position (in seconds)."""
+        return self.position
+
+    def _set_position(self, position):
         """Called to update current position."""
+        if position == self.position:
+            return
         self.position = position
         if self.player:
             self.player.audio_position_changed(position)
@@ -71,4 +77,28 @@ class AudioDriver:
 
     def stop(self):
         """Stop current playback (rewind source to the beginning)."""
+        raise NotImplementedError
+
+
+class PositionPollingAudioDriver(AudioDriver):
+    """Base class for audio drivers that need poling for position (do not
+    update it automatically).
+
+    Uses QTimer to make sure self.player.audio_position_changed() is called from the right thread
+    (Qt main loop)."""
+    def __init__(self, args=None):
+        AudioDriver.__init__(self, args)
+        from PySide2.QtCore import QTimer
+        self._timer = QTimer()
+        self._timer.timeout.connect(self._poll_position)
+        self._timer.start(100)
+
+    def _poll_position(self):
+        position = self.get_position()
+        self._set_position(position)
+
+    def get_position(self):
+        """Determine current stream position (in seconds).
+
+        Return 0.0 if unknown."""
         raise NotImplementedError

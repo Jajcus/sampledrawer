@@ -90,7 +90,7 @@ class QtAudioDriver(AudioDriver):
     def decoder_pos_changed(self, pos):
         logger.debug("Decoder position: %i", pos)
         time_pos = pos / 1000.0
-        self.set_position(time_pos)
+        self._set_position(time_pos)
 
     def decoder_state_changed(self, state):
         logger.debug("Decoder state: %r", state)
