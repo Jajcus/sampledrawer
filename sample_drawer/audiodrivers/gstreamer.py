@@ -87,6 +87,15 @@ class GStreamerAudioDriver(AudioDriver):
         # we couldn't care less about that name, but jackaudisink uses it in port names
         self._sink.set_name("p")
 
+        if isinstance(self._sink, Gst.Bin) and not self._sink.get_static_pad("sink"):
+            logger.debug("Selected sink is a bin, creating a sink pad")
+            pad = self._sink.find_unlinked_pad(Gst.PadDirection.SINK)
+            logger.debug("First unlinked sink pad in the pipeline: %r", pad)
+            if not pad:
+                logger.error("No usable sink pad found in %r", self._sink_string)
+                raise AudioDriverError("Unsuitable pipeline passed as audio device")
+            self._sink.add_pad(Gst.GhostPad.new("sink", pad))
+
         # setup and start dummy pipeline to open the device
         # especially for Jack we want the ports allocated and ready from the beginning
         tmp_pipeline = Gst.parse_launch("audiotestsrc wave=silence"
